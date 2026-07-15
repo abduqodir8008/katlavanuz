@@ -741,6 +741,7 @@ ul#historyList li span.pendingTag{
   color:var(--warn);
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -860,6 +861,8 @@ var canvasEl = document.getElementById("canvas");
 var switchCamBtn = document.getElementById("switchCamBtn");
 var switchCamLabel = document.getElementById("switchCamLabel");
 var plateInput = document.getElementById("plateInput");
+var autoReadBtn = document.getElementById("autoReadBtn");
+var autoReadLabel = document.getElementById("autoReadLabel");
 var noteInput = document.getElementById("noteInput");
 var captureBtn = document.getElementById("captureBtn");
 var statusEl = document.getElementById("status");
@@ -1625,6 +1628,114 @@ function getJpegQuality(){
   }
   return 0.97;
 }
+
+/* ================= AVTOMATIK RAQAM O'QISH (OCR) ================= */
+var ocrBusy = false;
+
+function cleanOcrText(raw){
+  return raw.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+}
+
+function extractPlateFromText(cleaned){
+  var re1 = /\d{2}[A-Z]\d{3}[A-Z]{2}/;
+  var re2 = /\d{2}\d{3}[A-Z]{3}/;
+  var m = cleaned.match(re1);
+  if(m){ return m[0]; }
+  m = cleaned.match(re2);
+  if(m){ return m[0]; }
+  return cleaned;
+}
+
+function formatPlateForDisplay(plate){
+  var m = plate.match(/^(\d{2})([A-Z])(\d{3})([A-Z]{2})$/);
+  if(m){ return m[1] + " " + m[2] + " " + m[3] + " " + m[4]; }
+  m = plate.match(/^(\d{2})(\d{3})([A-Z]{3})$/);
+  if(m){ return m[1] + " " + m[2] + " " + m[3]; }
+  return plate;
+}
+
+function buildOcrCanvas(){
+  var w = videoEl.videoWidth;
+  var h = videoEl.videoHeight;
+  if(!w || !h){ return null; }
+
+  var oc = document.createElement("canvas");
+  /* raqamni kattaroq va aniqroq ko'rish uchun 2x kattalashtiramiz */
+  var scale = 2;
+  oc.width = w * scale;
+  oc.height = h * scale;
+  var octx = oc.getContext("2d");
+  octx.drawImage(videoEl, 0, 0, oc.width, oc.height);
+
+  /* kulrang + kontrastni oshirish, OCR aniqligi uchun */
+  var imgData = octx.getImageData(0, 0, oc.width, oc.height);
+  var d = imgData.data;
+  var i;
+  for(i = 0; i < d.length; i += 4){
+    var gray = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+    /* kontrastni kuchaytirish */
+    gray = (gray - 128) * 1.5 + 128;
+    if(gray < 0){ gray = 0; }
+    if(gray > 255){ gray = 255; }
+    d[i] = gray; d[i + 1] = gray; d[i + 2] = gray;
+  }
+  octx.putImageData(imgData, 0, 0);
+  return oc;
+}
+
+autoReadBtn.addEventListener("click", function(){
+  if(ocrBusy){ return; }
+  if(!videoEl.videoWidth){
+    setStatus("Kamera hali tayyor emas, biroz kuting.", "error");
+    return;
+  }
+  if(typeof Tesseract === "undefined"){
+    setStatus("OCR kutubxonasi yuklanmadi. Internetni tekshiring.", "error");
+    return;
+  }
+
+  var ocrCanvas = buildOcrCanvas();
+  if(!ocrCanvas){
+    setStatus("Kameradan kadr olinmadi.", "error");
+    return;
+  }
+
+  ocrBusy = true;
+  autoReadBtn.disabled = true;
+  autoReadLabel.textContent = "O'qilmoqda...";
+  setStatus("Raqam aniqlanmoqda, biroz kuting...", "sending");
+
+  Tesseract.recognize(ocrCanvas, "eng", {
+    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  }).then(function(result){
+    var rawText = (result && result.data && result.data.text) ? result.data.text : "";
+    var cleaned = cleanOcrText(rawText);
+
+    if(cleaned === ""){
+      setStatus("Raqam aniqlanmadi. Ramkaga yaqinroq va tekis tuting, qayta urinib ko'ring.", "error");
+      showToast("Raqam aniqlanmadi, qo'lda kiriting", true);
+    } else {
+      var candidate = extractPlateFromText(cleaned);
+      var displayValue = formatPlateForDisplay(candidate);
+      plateInput.value = displayValue;
+      if(isPlateLikelyValid(displayValue)){
+        setStatus("Raqam aniqlandi: " + displayValue + ". Tekshirib, keyin rasmga oling.", "ok");
+        showToast("Aniqlandi: " + displayValue, false);
+      } else {
+        setStatus("Taxminiy o'qildi: " + displayValue + ". Iltimos tekshirib to'g'irlang.", "error");
+        showToast("Aniq o'qilmadi, tekshiring: " + displayValue, true);
+      }
+      plateInput.focus();
+    }
+  }).catch(function(err){
+    setStatus("OCR xatoligi: " + (err && err.message ? err.message : "noma'lum"), "error");
+    showToast("Avtomatik o'qishda xatolik yuz berdi", true);
+  }).finally(function(){
+    ocrBusy = false;
+    autoReadBtn.disabled = false;
+    autoReadLabel.textContent = "Avto";
+  });
+});
 
 captureBtn.addEventListener("click", function(){
   if(isSending){ return; }
