@@ -358,6 +358,38 @@ nav#sideMenu.open{transform:translateX(0);}
 #operatorRow b{color:var(--blue-dark);}
 #changeNameBtn{margin-left:auto;background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 8px;font-size:10.5px;font-weight:700;color:var(--blue);cursor:pointer;}
 #historyCount{flex:0 0 100%;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+#dailyReportBox{
+  flex:0 0 100%;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  background:var(--bg-1);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:10px;
+  margin:2px 0 4px 0;
+}
+#dailyReportText{
+  flex:0 0 100%;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  font-weight:700;
+  color:var(--blue-dark);
+}
+#sendDailyReportBtn{
+  flex:0 0 100%;
+  background:var(--teal);
+  border:none;
+  border-radius:9px;
+  padding:9px;
+  color:#ffffff;
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:12px;
+  letter-spacing:.2px;
+  cursor:pointer;
+}
+#sendDailyReportBtn:disabled{filter:grayscale(.4) brightness(.95);cursor:progress;}
 #tabsContainer{
   flex:0 0 100%;
   display:flex;
@@ -819,6 +851,10 @@ ul#historyList li span.pendingTag{
 
 <span id="historyPanel">
 <span id="historyCount">Saqlangan yozuvlar: 0 ta</span>
+<span id="dailyReportBox">
+<span id="dailyReportText">Bugun: 0 ta mashina qayd etildi</span>
+<button id="sendDailyReportBtn" type="button">📤 Bugungi hisobotni chatga yuborish</button>
+</span>
 <input id="historySearch" type="text" placeholder="Raqam bo'yicha qidirish...">
 <button id="exportCsvBtn" type="button">Tarixni CSV qilib yuklab olish</button>
 <button id="clearHistory" type="button">Barchasini o'chirish</button>
@@ -879,6 +915,8 @@ var sideMenu = document.getElementById("sideMenu");
 var overlay = document.getElementById("overlay");
 var historyList = document.getElementById("historyList");
 var historyCount = document.getElementById("historyCount");
+var dailyReportText = document.getElementById("dailyReportText");
+var sendDailyReportBtn = document.getElementById("sendDailyReportBtn");
 var operatorNameLabel = document.getElementById("operatorNameLabel");
 var changeNameBtn = document.getElementById("changeNameBtn");
 var emptyHistory = document.getElementById("emptyHistory");
@@ -1140,10 +1178,29 @@ function findRecentDuplicate(plate){
   }
   return null;
 }
+function getTodayDateStr(){
+  var d = new Date();
+  return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear();
+}
+function countTodayEntries(){
+  var arr = loadHistory();
+  var today = getTodayDateStr();
+  var count = 0;
+  var i;
+  for(i = 0; i < arr.length; i++){
+    if(arr[i].date === today){ count++; }
+  }
+  return count;
+}
+function updateDailyReportText(){
+  var count = countTodayEntries();
+  dailyReportText.textContent = "Bugun: " + count + " ta mashina qayd etildi";
+}
 function renderHistory(){
   var arr = loadHistory();
   var pending = loadPending();
   historyList.innerHTML = "";
+  updateDailyReportText();
 
   var filtered = arr;
   if(historyFilter){
@@ -1206,7 +1263,7 @@ function renderHistory(){
     deleteBtn.setAttribute("data-id", item.id || item.plate + "_" + item.time);
     deleteBtn.addEventListener("click", function(e){
       e.stopPropagation();
-      deleteHistoryEntry(deleteBtn.getAttribute("data-id"));
+      deleteHistoryEntry(e.currentTarget.getAttribute("data-id"));
     });
     li.appendChild(deleteBtn);
     
@@ -1309,6 +1366,7 @@ function renderTrash(){
     thumbBtn.type = "button";
     thumbBtn.className = "histThumbBtn";
     thumbBtn.setAttribute("data-plate", item.plate);
+    thumbBtn.setAttribute("data-time", item.time);
     
     var img = document.createElement("img");
     img.src = item.thumb;
@@ -1332,7 +1390,7 @@ function renderTrash(){
     restoreBtn.setAttribute("data-id", item.id || item.plate + "_" + item.time);
     restoreBtn.addEventListener("click", function(e){
       e.stopPropagation();
-      restoreTrashEntry(restoreBtn.getAttribute("data-id"));
+      restoreTrashEntry(e.currentTarget.getAttribute("data-id"));
     });
     li.appendChild(restoreBtn);
     
@@ -1399,6 +1457,24 @@ historyList.addEventListener("click", function(e){
   viewerCaption.textContent = capTxt;
   imgViewer.classList.add("show");
 });
+trashList.addEventListener("click", function(e){
+  var btn = e.target.closest ? e.target.closest(".histThumbBtn") : null;
+  if(!btn){ return; }
+  var plate = btn.getAttribute("data-plate");
+  var time = btn.getAttribute("data-time");
+  var arr = loadTrash();
+  var item = null;
+  var i;
+  for(i = 0; i < arr.length; i++){
+    if(arr[i].plate === plate && arr[i].time === time){ item = arr[i]; break; }
+  }
+  if(!item){ return; }
+  viewerImg.src = item.thumb;
+  var capTxt = item.plate + "   ·   " + item.time + "   ·   " + item.date;
+  if(item.note){ capTxt = capTxt + "   ·   " + item.note; }
+  viewerCaption.textContent = capTxt;
+  imgViewer.classList.add("show");
+});
 closeViewer.addEventListener("click", function(){
   imgViewer.classList.remove("show");
 });
@@ -1424,6 +1500,41 @@ clearHistoryBtn.addEventListener("click", function(){
   if(!confirm("Butun tarixni o'chirishga ishonchingiz komilmi?")){ return; }
   localStorage.removeItem(STORAGE_KEY);
   renderHistory();
+});
+
+function sendTelegramMessage(text){
+  var url = "https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage";
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: CHAT_ID, text: text })
+  }).then(function(res){ return res.json(); });
+}
+
+sendDailyReportBtn.addEventListener("click", function(){
+  var count = countTodayEntries();
+  var now = getNowStrings();
+  var opLine = operatorName ? ("\nOperator: " + operatorName) : "";
+  var text = "📋 KUNLIK HISOBOT\nSana: " + now.date + "\nBugun qayd etilgan mashinalar: " + count + " ta" + opLine + "\nVaqt: " + now.time;
+
+  sendDailyReportBtn.disabled = true;
+  var originalLabel = sendDailyReportBtn.textContent;
+  sendDailyReportBtn.textContent = "Yuborilmoqda...";
+
+  sendTelegramMessage(text).then(function(data){
+    sendDailyReportBtn.disabled = false;
+    sendDailyReportBtn.textContent = originalLabel;
+    if(data && data.ok){
+      showToast("Kunlik hisobot yuborildi: " + count + " ta", false);
+    } else {
+      var desc = (data && data.description) ? data.description : "Noma'lum xatolik";
+      showToast("Hisobot yuborilmadi: " + desc, true);
+    }
+  }).catch(function(err){
+    sendDailyReportBtn.disabled = false;
+    sendDailyReportBtn.textContent = originalLabel;
+    showToast("Tarmoq xatoligi, hisobot yuborilmadi", true);
+  });
 });
 
 clearTrashBtn.addEventListener("click", function(){
