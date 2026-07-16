@@ -2,8 +2,13 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
+<script>(function(){try{if(localStorage.getItem("katlavan_dark_mode")==="1"){document.documentElement.classList.add("darkMode");}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>KATLAVAN NAZORAT — raqam qayd</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d3f78" id="themeColorMeta">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -25,6 +30,25 @@
   --warn:#0d3f78;
   --warn-bg:#e8f0fa;
 }
+:root.darkMode{
+  --blue:#4d9de0;
+  --blue-dark:#8ec2f2;
+  --blue-light:#6db3ea;
+  --teal:#2bc4c4;
+  --bg-1:#0f1a29;
+  --bg-2:#0a121d;
+  --card:#16233a;
+  --border:#25344d;
+  --text:#e7eef7;
+  --muted:#8ea3bd;
+  --good:#4fd18e;
+  --good-bg:#123626;
+  --danger:#ff8078;
+  --danger-bg:#3a1a17;
+  --warn:#8ec2f2;
+  --warn-bg:#1c2c47;
+}
+html.darkMode,body{transition:background-color .25s ease,color .25s ease;}
 *{box-sizing:border-box;}
 html{overscroll-behavior:none;touch-action:manipulation;}
 body{
@@ -417,14 +441,219 @@ button.tab.active{
   box-shadow:0 2px 6px rgba(21,101,192,.1);
 }
 
-#historyPanel,#trashPanel{
+#menuTabs{
+  flex:0 0 100%;
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  background:var(--bg-1);
+  border-radius:10px;
+  padding:4px;
+}
+button.menuTabBtn{
+  flex:1 1 auto;
+  min-width:64px;
+  background:transparent;
+  border:none;
+  border-radius:8px;
+  padding:8px 5px;
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:10.5px;
+  letter-spacing:.1px;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all .2s ease;
+  white-space:nowrap;
+  position:relative;
+}
+button.menuTabBtn.active{
+  background:var(--card);
+  color:var(--blue-dark);
+  box-shadow:0 2px 6px rgba(21,101,192,.1);
+}
+
+#historyPanel,#trashPanel,#statsPanel{
   flex:0 0 100%;
   display:flex;
   flex-wrap:wrap;
   gap:10px;
 }
-#trashPanel{
+#trashPanel,#statsPanel{
   display:none;
+}
+
+/* ---------- STATISTIKA PANELI ---------- */
+#statsSummaryGrid{
+  flex:0 0 100%;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.statCard{
+  background:var(--bg-1);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.statCardNum{
+  font-family:'JetBrains Mono',monospace;
+  font-size:22px;
+  font-weight:800;
+  color:var(--blue-dark);
+  line-height:1.1;
+}
+.statCardLabel{
+  font-size:10.5px;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
+.statsSectionTitle{
+  flex:0 0 100%;
+  font-size:11px;
+  font-weight:800;
+  color:var(--blue-dark);
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  margin:4px 0 -2px 2px;
+}
+#statsWeekChart,#statsHourChart{
+  flex:0 0 100%;
+  display:flex;
+  align-items:flex-end;
+  gap:5px;
+  background:var(--bg-1);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  padding:12px 8px 8px 8px;
+  height:110px;
+}
+.statBarCol{
+  flex:1 1 0;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  min-width:0;
+}
+.statBarNum{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;
+  font-weight:700;
+  color:var(--blue-dark);
+}
+.statBar{
+  width:70%;
+  min-height:3px;
+  border-radius:5px 5px 2px 2px;
+  background:linear-gradient(180deg,var(--blue-light),var(--blue));
+  transition:height .3s ease;
+}
+.statBar.today{
+  background:linear-gradient(180deg,var(--teal),var(--blue-dark));
+}
+.statBarLabel{
+  font-size:9px;
+  font-weight:700;
+  color:var(--muted);
+  white-space:nowrap;
+}
+#statsTopPlates{
+  flex:0 0 100%;
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+#statsTopPlates li{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--bg-1);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:8px 10px;
+}
+.statRank{
+  flex:0 0 auto;
+  width:20px;height:20px;
+  border-radius:6px;
+  background:var(--blue);
+  color:#fff;
+  font-size:10.5px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.statPlateName{
+  flex:1 1 auto;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:.5px;
+  color:var(--text);
+}
+.statPlateCount{
+  flex:0 0 auto;
+  font-size:11px;
+  font-weight:800;
+  color:var(--teal);
+  background:var(--good-bg);
+  border-radius:20px;
+  padding:3px 9px;
+}
+#statsEmpty{
+  flex:0 0 100%;
+  text-align:center;
+  color:var(--muted);
+  font-size:12.5px;
+  padding:14px 0;
+  display:none;
+}
+
+.settingsToggleRow{
+  flex:0 0 100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.switchToggle{
+  flex:0 0 auto;
+  width:44px;height:25px;
+  border-radius:14px;
+  border:1.5px solid var(--border);
+  background:var(--bg-2);
+  position:relative;
+  cursor:pointer;
+  padding:0;
+  transition:background .2s ease,border-color .2s ease;
+}
+.switchToggle[aria-pressed="true"]{
+  background:var(--blue);
+  border-color:var(--blue);
+}
+.switchKnob{
+  position:absolute;
+  top:2px;left:2px;
+  width:19px;height:19px;
+  border-radius:50%;
+  background:#ffffff;
+  box-shadow:0 1px 3px rgba(0,0,0,.35);
+  transition:transform .2s ease;
+}
+.switchToggle[aria-pressed="true"] .switchKnob{
+  transform:translateX(19px);
 }
 
 #clearHistory,#clearTrash{
@@ -512,6 +741,22 @@ button.deleteHistBtn:active{
   background:var(--danger);
   color:#ffffff;
 }
+button.editHistBtn{
+  flex:0 0 auto;
+  background:var(--warn-bg);
+  border:1px solid var(--blue);
+  color:var(--blue);
+  border-radius:7px;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+button.editHistBtn:active{
+  background:var(--blue);
+  color:#ffffff;
+}
 button.restoreBtn{
   flex:0 0 auto;
   background:var(--good-bg);
@@ -528,7 +773,274 @@ button.restoreBtn:active{
   background:var(--good);
   color:#ffffff;
 }
-#emptyHistory,#emptyTrash{flex:0 0 100%;font-size:12px;color:#93a7ba;text-align:center;padding:22px 0;}
+#emptyHistory,#emptyTrash,#emptyPending{flex:0 0 100%;font-size:12px;color:#93a7ba;text-align:center;padding:22px 0;}
+
+/* ---------- YUBORILMAGAN (ADDENDA) BO'LIMI ---------- */
+.tabCountBadge{
+  display:inline-block;
+  margin-left:5px;
+  background:var(--danger);
+  color:#ffffff;
+  border-radius:20px;
+  font-size:10px;
+  font-weight:800;
+  padding:1px 6px;
+  line-height:1.4;
+  vertical-align:middle;
+}
+#pendingPanel{
+  flex:0 0 100%;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+#pendingCount{flex:0 0 100%;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+#pendingHint{
+  flex:0 0 100%;
+  font-size:11px;
+  line-height:1.5;
+  color:var(--muted);
+  background:var(--warn-bg);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:9px 10px;
+}
+#sendAllPendingBtn{
+  flex:0 0 100%;
+  background:var(--blue);
+  border:none;
+  border-radius:9px;
+  padding:9px;
+  color:#ffffff;
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:12px;
+  letter-spacing:.2px;
+  cursor:pointer;
+}
+#sendAllPendingBtn:disabled{filter:grayscale(.4) brightness(.95);cursor:progress;}
+ul#pendingList{
+  list-style:none;
+  margin:0;padding:0;
+  flex:0 0 100%;
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+}
+ul#pendingList li{
+  flex:0 0 100%;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  background:var(--card);
+  border:1.5px solid var(--blue);
+  border-radius:12px;
+  padding:8px;
+  box-shadow:0 2px 8px rgba(15,37,64,.05);
+}
+button.pendingThumbBtn{
+  flex:0 0 auto;
+  padding:0;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+  width:58px;height:44px;
+  background:none;
+  cursor:pointer;
+}
+button.pendingThumbBtn img{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+}
+ul#pendingList li span.plate{
+  flex:1 1 auto;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  font-size:13px;
+  color:var(--blue-dark);
+  letter-spacing:.6px;
+}
+ul#pendingList li span.time{
+  flex:0 0 100%;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:#93a7ba;
+}
+button.sendOnePendingBtn{
+  flex:0 0 auto;
+  background:var(--good-bg);
+  border:1px solid var(--good);
+  color:var(--good);
+  border-radius:7px;
+  padding:5px 10px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+button.sendOnePendingBtn:active{background:var(--good);color:#ffffff;}
+button.sendOnePendingBtn:disabled{opacity:.55;cursor:progress;}
+button.deletePendingBtn{
+  flex:0 0 auto;
+  background:var(--danger-bg);
+  border:1px solid var(--danger);
+  color:var(--danger);
+  border-radius:7px;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+button.deletePendingBtn:active{background:var(--danger);color:#ffffff;}
+
+/* ---------- SOZLAMALAR BO'LIMI ---------- */
+#settingsPanel{
+  flex:0 0 100%;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-content:flex-start;
+}
+.settingsSection{
+  flex:0 0 100%;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.settingsInputRow{
+  flex:0 0 100%;
+  display:flex;
+  gap:6px;
+}
+#botTokenInput,#chatIdInput,#newPinInput{
+  flex:1 1 auto;
+  min-width:0;
+  background:var(--bg-2);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:11px 12px;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+}
+#botTokenInput::placeholder,#chatIdInput::placeholder,#newPinInput::placeholder{
+  color:#93a7ba;font-family:'Manrope',sans-serif;font-size:12px;
+}
+#botTokenInput:focus,#chatIdInput:focus,#newPinInput:focus{
+  outline:none;border-color:var(--blue);background:#ffffff;
+}
+button.eyeBtn{
+  flex:0 0 auto;
+  width:42px;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  font-size:15px;
+  cursor:pointer;
+  color:var(--muted);
+}
+.settingsFieldHint{
+  flex:0 0 100%;
+  font-size:10.5px;
+  color:var(--muted);
+  line-height:1.4;
+}
+#settingsStatus{
+  flex:0 0 100%;
+  font-size:12px;
+  font-weight:700;
+  min-height:16px;
+  color:var(--muted);
+}
+#settingsStatus[data-state="ok"]{color:var(--good);}
+#settingsStatus[data-state="error"]{color:var(--danger);}
+#saveSettingsBtn{
+  flex:0 0 100%;
+  background:var(--blue);
+  border:none;
+  border-radius:10px;
+  padding:11px;
+  color:#ffffff;
+  font-family:'Manrope',sans-serif;
+  font-weight:800;
+  font-size:13px;
+  letter-spacing:.2px;
+  cursor:pointer;
+}
+#testConnectionBtn{
+  flex:0 0 100%;
+  background:var(--teal);
+  border:none;
+  border-radius:10px;
+  padding:10px;
+  color:#ffffff;
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:12.5px;
+  cursor:pointer;
+}
+#testConnectionBtn:disabled,#saveSettingsBtn:disabled{filter:grayscale(.4) brightness(.95);cursor:progress;}
+#resetSettingsBtn{
+  flex:0 0 100%;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:9px;
+  color:var(--muted);
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:12px;
+  cursor:pointer;
+}
+#settingsDivider,#settingsDivider2,#settingsDivider3{
+  flex:0 0 100%;
+  height:1.5px;
+  background:var(--border);
+  margin:4px 0;
+}
+#exportBackupBtn,#importBackupBtn{
+  flex:0 0 100%;
+  background:var(--card);
+  border:1.5px solid var(--blue);
+  border-radius:10px;
+  padding:10px;
+  color:var(--blue);
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:12.5px;
+  cursor:pointer;
+  margin-top:4px;
+}
+#exportBackupBtn:active,#importBackupBtn:active{
+  background:var(--blue);
+  color:#ffffff;
+}
+#backupStatus{
+  flex:0 0 100%;
+  font-size:12px;
+  font-weight:700;
+  min-height:16px;
+  color:var(--muted);
+  margin-top:2px;
+}
+#backupStatus[data-state="ok"]{color:var(--good);}
+#backupStatus[data-state="error"]{color:var(--danger);}
+#lockAppBtn{
+  flex:0 0 100%;
+  background:var(--danger-bg);
+  border:1.5px solid var(--danger);
+  border-radius:10px;
+  padding:10px;
+  color:var(--danger);
+  font-family:'Manrope',sans-serif;
+  font-weight:800;
+  font-size:12.5px;
+  letter-spacing:.2px;
+  cursor:pointer;
+}
 
 /* ---------- IMAGE VIEWER (rasmni to'liq ko'rish) ---------- */
 span#imgViewer{
@@ -571,6 +1083,90 @@ button#closeViewer{
   font-size:16px;
   cursor:pointer;
   z-index:61;
+}
+
+/* ---------- YOZUVNI TAHRIRLASH OYNASI ---------- */
+span#editEntryOverlay{
+  position:fixed;inset:0;
+  z-index:70;
+  background:rgba(10,25,42,.55);
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  padding:22px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease;
+}
+span#editEntryOverlay.show{opacity:1;pointer-events:auto;}
+span#editEntryBox{
+  flex:0 0 100%;
+  max-width:340px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:0 16px 44px rgba(0,0,0,.35);
+}
+span#editEntryBox h3{
+  flex:0 0 100%;
+  margin:0 0 4px 0;
+  font-size:16px;
+  font-weight:800;
+  color:var(--blue-dark);
+}
+#editPlateInput,#editNoteInput{
+  flex:0 0 100%;
+  background:var(--bg-2);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:11px 12px;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;
+}
+#editNoteInput{font-family:'Manrope',sans-serif;font-weight:500;}
+#editPlateInput:focus,#editNoteInput:focus{outline:none;border-color:var(--blue);background:#ffffff;}
+#editEntryError{
+  flex:0 0 100%;
+  color:var(--danger);
+  font-size:12px;
+  font-weight:700;
+  min-height:14px;
+}
+#editEntryBtnRow{
+  flex:0 0 100%;
+  display:flex;
+  gap:8px;
+  margin-top:4px;
+}
+#editEntrySaveBtn{
+  flex:1 1 auto;
+  background:var(--blue);
+  border:none;
+  border-radius:10px;
+  padding:11px;
+  color:#ffffff;
+  font-family:'Manrope',sans-serif;
+  font-weight:800;
+  font-size:13px;
+  cursor:pointer;
+}
+#editEntryCancelBtn{
+  flex:1 1 auto;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:11px;
+  color:var(--muted);
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  cursor:pointer;
 }
 
 /* ---------- AVTOMATIK CHIQUVCHI BILDIRISHNOMA (TOAST) ---------- */
@@ -743,6 +1339,25 @@ span#pinScreen, span#nameScreen{
   color:var(--text);
 }
 #historySearch::placeholder{color:#93a7ba;}
+
+/* ---------- OFFLINE BANNER ---------- */
+#offlineBanner{
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:200;
+  background:var(--danger);
+  color:#ffffff;
+  text-align:center;
+  font-family:'Manrope',sans-serif;
+  font-size:11.5px;
+  font-weight:700;
+  letter-spacing:.2px;
+  padding:7px 10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+body.offlineMode #offlineBanner{display:block;}
+body.offlineMode{padding-top:32px;}
 #exportCsvBtn{
   flex:0 0 100%;
   background:var(--card);
@@ -776,6 +1391,8 @@ ul#historyList li span.pendingTag{
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
+
+<span id="offlineBanner">📴 Oflayn rejim — internet yo'q, rasmlar navbatga qo'yiladi</span>
 
 <span id="pinScreen">
 <span id="pinBox">
@@ -846,7 +1463,10 @@ ul#historyList li span.pendingTag{
 
 <span id="menuTabs">
 <button id="tabHistoryBtn" class="menuTabBtn tabActive" type="button">Tarix</button>
+<button id="tabPendingBtn" class="menuTabBtn" type="button">Yuborilmagan<span id="tabPendingCount" class="tabCountBadge" style="display:none;">0</span></button>
 <button id="tabTrashBtn" class="menuTabBtn" type="button">O'chirilganlar</button>
+<button id="tabStatsBtn" class="menuTabBtn" type="button">&#128202; Statistika</button>
+<button id="tabSettingsBtn" class="menuTabBtn" type="button">&#9881; Sozlamalar</button>
 </span>
 
 <span id="historyPanel">
@@ -869,12 +1489,108 @@ ul#historyList li span.pendingTag{
 <span id="emptyTrash">O'chirilgan rasmlar yo'q.</span>
 </span>
 
+<span id="statsPanel">
+<span id="statsSummaryGrid">
+<span class="statCard"><span class="statCardNum" id="statToday">0</span><span class="statCardLabel">Bugun</span></span>
+<span class="statCard"><span class="statCardNum" id="statWeek">0</span><span class="statCardLabel">Bu hafta</span></span>
+<span class="statCard"><span class="statCardNum" id="statMonth">0</span><span class="statCardLabel">Bu oy</span></span>
+<span class="statCard"><span class="statCardNum" id="statAll">0</span><span class="statCardLabel">Jami</span></span>
+</span>
+
+<span class="statsSectionTitle">Oxirgi 7 kun</span>
+<span id="statsWeekChart"></span>
+
+<span class="statsSectionTitle">Bugun, soatlar bo'yicha</span>
+<span id="statsHourChart"></span>
+
+<span class="statsSectionTitle">Eng ko'p qaytalangan raqamlar (30 kun)</span>
+<ul id="statsTopPlates"></ul>
+<span id="statsEmpty">Statistika uchun hali yetarli ma'lumot yo'q. Mashina raqamlarini qayd etishni boshlang.</span>
+</span>
+
+<span id="pendingPanel" style="display:none;">
+<span id="pendingCount">Yuborilmagan rasmlar: 0 ta</span>
+<span id="pendingHint">Internet (Wi-Fi/mobil tarmoq) yo'q bo'lganda olingan rasmlar shu yerda navbatda turadi. Tarmoq tiklangach avtomatik yuboriladi, yoki har birini alohida "Yuborish" tugmasi bilan qo'lda yuboring.</span>
+<button id="sendAllPendingBtn" type="button">📤 Barchasini yuborish</button>
+<ul id="pendingList"></ul>
+<span id="emptyPending">Yuborilmagan rasm yo'q. Barcha rasmlar muvaffaqiyatli yuborilgan.</span>
+</span>
+
+<span id="settingsPanel" style="display:none;">
+<span class="settingsSection">
+<span class="settingsToggleRow">
+<label class="fieldLabel" style="margin:0;">&#127769; Tungi rejim (Dark mode)</label>
+<button id="darkModeToggle" type="button" class="switchToggle" aria-pressed="false"><span class="switchKnob"></span></button>
+</span>
+</span>
+
+<span id="settingsDivider3"></span>
+
+<span class="settingsSection">
+<label class="fieldLabel" for="botTokenInput">Telegram Bot Token</label>
+<span class="settingsInputRow">
+<input id="botTokenInput" type="password" placeholder="123456789:AA...">
+<button id="toggleBotTokenBtn" type="button" class="eyeBtn">&#128065;</button>
+</span>
+</span>
+
+<span class="settingsSection">
+<label class="fieldLabel" for="chatIdInput">Telegram Chat ID</label>
+<input id="chatIdInput" type="text" placeholder="-100... yoki chat ID">
+</span>
+
+<span class="settingsSection">
+<label class="fieldLabel" for="newPinInput">Ilova PIN kodi (4-6 raqam)</label>
+<span class="settingsInputRow">
+<input id="newPinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Yangi PIN (o'zgartirish uchun)">
+<button id="toggleNewPinBtn" type="button" class="eyeBtn">&#128065;</button>
+</span>
+<span class="settingsFieldHint">Bo'sh qoldirsangiz, joriy PIN kod o'zgarmaydi.</span>
+</span>
+
+<span id="settingsStatus"></span>
+
+<button id="saveSettingsBtn" type="button">💾 Sozlamalarni saqlash</button>
+<button id="testConnectionBtn" type="button">🔎 Ulanishni tekshirish</button>
+<button id="resetSettingsBtn" type="button">♻ Standart holatga qaytarish</button>
+
+<span id="settingsDivider"></span>
+
+<span class="settingsSection">
+<label class="fieldLabel">Zaxira nusxa (Backup)</label>
+<span class="settingsFieldHint">Barcha tarix, savat, navbat va sozlamalarni bitta JSON faylga saqlab oling — telefon almashtirilganda yoki ma'lumot yo'qolganda tiklash uchun.</span>
+<button id="exportBackupBtn" type="button">⬇ Zaxirani yuklab olish (JSON)</button>
+<button id="importBackupBtn" type="button">⬆ Zaxiradan tiklash</button>
+<input id="importBackupFile" type="file" accept="application/json,.json" style="display:none;">
+<span id="backupStatus"></span>
+</span>
+
+<span id="settingsDivider2"></span>
+
+<button id="lockAppBtn" type="button">🔒 Ilovani qulflash (chiqish)</button>
+</span>
+
 </nav>
 
 <span id="imgViewer">
 <button id="closeViewer" type="button">&#10005;</button>
 <img id="viewerImg" src="" alt="Saqlangan rasm">
 <span id="viewerCaption"></span>
+</span>
+
+<span id="editEntryOverlay">
+<span id="editEntryBox">
+<h3>Yozuvni tahrirlash</h3>
+<label class="fieldLabel" for="editPlateInput">Mashina raqami</label>
+<input id="editPlateInput" type="text" autocapitalize="characters">
+<label class="fieldLabel" for="editNoteInput">Izoh</label>
+<input id="editNoteInput" type="text">
+<span id="editEntryError"></span>
+<span id="editEntryBtnRow">
+<button id="editEntrySaveBtn" type="button">💾 Saqlash</button>
+<button id="editEntryCancelBtn" type="button">Bekor qilish</button>
+</span>
+</span>
 </span>
 
 <span id="toast">
@@ -884,12 +1600,21 @@ ul#historyList li span.pendingTag{
 
 <script>
 /* ================= SOZLAMALAR ================= */
-var BOT_TOKEN = "8819241648:AAHg9Gk4FXwn4faYvV4sEuOxktceMNsQiFs";
-var CHAT_ID = "-1004355593897";
+var DEFAULT_BOT_TOKEN = "8819241648:AAHg9Gk4FXwn4faYvV4sEuOxktceMNsQiFs";
+var DEFAULT_CHAT_ID = "-1004355593897";
+var DEFAULT_APP_PIN = "9999";
+
+var BOT_TOKEN_KEY = "katlavanBotTokenV1";
+var CHAT_ID_KEY = "katlavanChatIdV1";
+var PIN_KEY = "katlavanAppPinV1";
+
 var STORAGE_KEY = "katlavanHistoryV2";
 var PENDING_KEY = "katlavanPendingV1";
 var NAME_KEY = "katlavanOperatorNameV1";
-var APP_PIN = "9999"; /* PIN kodni shu yerdan o'zgartiring */
+
+var BOT_TOKEN = localStorage.getItem(BOT_TOKEN_KEY) || DEFAULT_BOT_TOKEN;
+var CHAT_ID = localStorage.getItem(CHAT_ID_KEY) || DEFAULT_CHAT_ID;
+var APP_PIN = localStorage.getItem(PIN_KEY) || DEFAULT_APP_PIN;
 
 /* ================= ELEMENTLAR ================= */
 var videoEl = document.getElementById("cam");
@@ -933,10 +1658,56 @@ var trashCount = document.getElementById("trashCount");
 var clearTrashBtn = document.getElementById("clearTrash");
 var emptyTrash = document.getElementById("emptyTrash");
 
+var statsPanel = document.getElementById("statsPanel");
+var tabStatsBtn = document.getElementById("tabStatsBtn");
+var statToday = document.getElementById("statToday");
+var statWeek = document.getElementById("statWeek");
+var statMonth = document.getElementById("statMonth");
+var statAll = document.getElementById("statAll");
+var statsWeekChart = document.getElementById("statsWeekChart");
+var statsHourChart = document.getElementById("statsHourChart");
+var statsTopPlates = document.getElementById("statsTopPlates");
+var statsEmpty = document.getElementById("statsEmpty");
+
+var pendingPanel = document.getElementById("pendingPanel");
+var tabPendingBtn = document.getElementById("tabPendingBtn");
+var tabPendingCount = document.getElementById("tabPendingCount");
+var pendingList = document.getElementById("pendingList");
+var pendingCount = document.getElementById("pendingCount");
+var emptyPending = document.getElementById("emptyPending");
+var sendAllPendingBtn = document.getElementById("sendAllPendingBtn");
+
+var settingsPanel = document.getElementById("settingsPanel");
+var darkModeToggle = document.getElementById("darkModeToggle");
+var themeColorMeta = document.getElementById("themeColorMeta");
+var tabSettingsBtn = document.getElementById("tabSettingsBtn");
+var botTokenInput = document.getElementById("botTokenInput");
+var toggleBotTokenBtn = document.getElementById("toggleBotTokenBtn");
+var chatIdInput = document.getElementById("chatIdInput");
+var newPinInput = document.getElementById("newPinInput");
+var toggleNewPinBtn = document.getElementById("toggleNewPinBtn");
+var settingsStatus = document.getElementById("settingsStatus");
+var saveSettingsBtn = document.getElementById("saveSettingsBtn");
+var testConnectionBtn = document.getElementById("testConnectionBtn");
+var resetSettingsBtn = document.getElementById("resetSettingsBtn");
+var lockAppBtn = document.getElementById("lockAppBtn");
+var exportBackupBtn = document.getElementById("exportBackupBtn");
+var importBackupBtn = document.getElementById("importBackupBtn");
+var importBackupFile = document.getElementById("importBackupFile");
+var backupStatus = document.getElementById("backupStatus");
+
 var imgViewer = document.getElementById("imgViewer");
 var viewerImg = document.getElementById("viewerImg");
 var viewerCaption = document.getElementById("viewerCaption");
 var closeViewer = document.getElementById("closeViewer");
+
+var editEntryOverlay = document.getElementById("editEntryOverlay");
+var editEntryBox = document.getElementById("editEntryBox");
+var editPlateInput = document.getElementById("editPlateInput");
+var editNoteInput = document.getElementById("editNoteInput");
+var editEntryError = document.getElementById("editEntryError");
+var editEntrySaveBtn = document.getElementById("editEntrySaveBtn");
+var editEntryCancelBtn = document.getElementById("editEntryCancelBtn");
 
 var toastEl = document.getElementById("toast");
 var toastText = document.getElementById("toastText");
@@ -1266,6 +2037,17 @@ function renderHistory(){
       deleteHistoryEntry(e.currentTarget.getAttribute("data-id"));
     });
     li.appendChild(deleteBtn);
+
+    var editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "editHistBtn";
+    editBtn.textContent = "✎ Tahrirlash";
+    editBtn.setAttribute("data-id", item.id || item.plate + "_" + item.time);
+    editBtn.addEventListener("click", function(e){
+      e.stopPropagation();
+      openEditEntry(e.currentTarget.getAttribute("data-id"));
+    });
+    li.appendChild(editBtn);
     
     li.appendChild(timeSpan);
     historyList.appendChild(li);
@@ -1317,6 +2099,73 @@ function deleteHistoryEntry(entryId){
     showToast(foundItem.plate + " o'chirildi, savat-ga tushdi", false);
   }
 }
+
+/* ---------- YOZUVNI TAHRIRLASH ---------- */
+var editingEntryId = null;
+function openEditEntry(entryId){
+  var arr = loadHistory();
+  var foundItem = null;
+  var i;
+  for(i = 0; i < arr.length; i++){
+    var id = arr[i].id || arr[i].plate + "_" + arr[i].time;
+    if(id === entryId){
+      foundItem = arr[i];
+      break;
+    }
+  }
+  if(!foundItem){ return; }
+
+  editingEntryId = entryId;
+  editPlateInput.value = foundItem.plate || "";
+  editNoteInput.value = foundItem.note || "";
+  editEntryError.textContent = "";
+  editEntryOverlay.classList.add("show");
+  editPlateInput.focus();
+}
+function closeEditEntry(){
+  editingEntryId = null;
+  editEntryOverlay.classList.remove("show");
+}
+function saveEditEntry(){
+  if(!editingEntryId){ return; }
+  var newPlate = editPlateInput.value.trim().toUpperCase();
+  var newNote = editNoteInput.value.trim();
+
+  if(newPlate === ""){
+    editEntryError.textContent = "Mashina raqami bo'sh bo'lishi mumkin emas.";
+    editPlateInput.focus();
+    return;
+  }
+
+  var arr = loadHistory();
+  var i;
+  for(i = 0; i < arr.length; i++){
+    var id = arr[i].id || arr[i].plate + "_" + arr[i].time;
+    if(id === editingEntryId){
+      /* raqam o'zgarsa ham identifikator barqaror qolishi uchun id ni saqlab qo'yamiz */
+      arr[i].id = arr[i].id || editingEntryId;
+      arr[i].plate = newPlate;
+      arr[i].note = newNote;
+      arr[i].editedAt = Date.now();
+      break;
+    }
+  }
+  saveHistory(arr);
+  renderHistory();
+  closeEditEntry();
+  showToast(newPlate + " ma'lumotlari yangilandi", false);
+}
+editEntrySaveBtn.addEventListener("click", saveEditEntry);
+editEntryCancelBtn.addEventListener("click", closeEditEntry);
+editEntryOverlay.addEventListener("click", function(e){
+  if(e.target === editEntryOverlay){ closeEditEntry(); }
+});
+editPlateInput.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){ saveEditEntry(); }
+});
+editNoteInput.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){ saveEditEntry(); }
+});
 
 function restoreTrashEntry(entryId){
   var trash = loadTrash();
@@ -1544,19 +2393,207 @@ clearTrashBtn.addEventListener("click", function(){
   showToast("Savat tozalandi", false);
 });
 
-tabHistoryBtn.addEventListener("click", function(){
-  tabHistoryBtn.classList.add("active");
+function showMenuTab(tab){
+  tabHistoryBtn.classList.remove("active");
+  tabPendingBtn.classList.remove("active");
   tabTrashBtn.classList.remove("active");
-  historyPanel.style.display = "flex";
+  tabStatsBtn.classList.remove("active");
+  tabSettingsBtn.classList.remove("active");
+  historyPanel.style.display = "none";
+  pendingPanel.style.display = "none";
   trashPanel.style.display = "none";
+  statsPanel.style.display = "none";
+  settingsPanel.style.display = "none";
+
+  if(tab === "history"){
+    tabHistoryBtn.classList.add("active");
+    historyPanel.style.display = "flex";
+  } else if(tab === "pending"){
+    tabPendingBtn.classList.add("active");
+    pendingPanel.style.display = "flex";
+    renderPendingList();
+  } else if(tab === "trash"){
+    tabTrashBtn.classList.add("active");
+    trashPanel.style.display = "flex";
+  } else if(tab === "stats"){
+    tabStatsBtn.classList.add("active");
+    statsPanel.style.display = "flex";
+    renderStats();
+  } else if(tab === "settings"){
+    tabSettingsBtn.classList.add("active");
+    settingsPanel.style.display = "flex";
+    loadSettingsIntoForm();
+  }
+}
+
+tabHistoryBtn.addEventListener("click", function(){
+  showMenuTab("history");
+});
+
+tabPendingBtn.addEventListener("click", function(){
+  showMenuTab("pending");
 });
 
 tabTrashBtn.addEventListener("click", function(){
-  tabTrashBtn.classList.add("active");
-  tabHistoryBtn.classList.remove("active");
-  trashPanel.style.display = "flex";
-  historyPanel.style.display = "none";
+  showMenuTab("trash");
 });
+
+tabStatsBtn.addEventListener("click", function(){
+  showMenuTab("stats");
+});
+
+tabSettingsBtn.addEventListener("click", function(){
+  showMenuTab("settings");
+});
+
+/* ================= STATISTIKA ================= */
+var STATS_WEEKDAY_LABELS = ["Ya","Du","Se","Ch","Pa","Ju","Sh"];
+
+function startOfDay(d){
+  var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return x.getTime();
+}
+
+function renderStats(){
+  var arr = loadHistory();
+  var now = new Date();
+  var todayStart = startOfDay(now);
+  var dayMs = 24 * 60 * 60 * 1000;
+
+  var weekAgoStart = todayStart - 6 * dayMs; /* oxirgi 7 kun (bugun bilan) */
+  var monthAgoStart = todayStart - 29 * dayMs; /* oxirgi 30 kun (bugun bilan) */
+
+  var todayCount = 0, weekCount = 0, monthCount = 0;
+  var dayBuckets = {}; /* dayStartTs -> count, oxirgi 7 kun uchun */
+  var hourBuckets = new Array(24).fill(0); /* faqat bugun uchun */
+  var plateCounts30 = {}; /* oxirgi 30 kun ichida raqam -> son */
+
+  var i, item, ts, itemDayStart;
+  for(i = 0; i < arr.length; i++){
+    item = arr[i];
+    ts = item.ts;
+    if(!ts){ continue; }
+    itemDayStart = startOfDay(new Date(ts));
+
+    if(itemDayStart === todayStart){
+      todayCount++;
+      var hr = new Date(ts).getHours();
+      hourBuckets[hr] = hourBuckets[hr] + 1;
+    }
+    if(itemDayStart >= weekAgoStart && itemDayStart <= todayStart){
+      weekCount++;
+      dayBuckets[itemDayStart] = (dayBuckets[itemDayStart] || 0) + 1;
+    }
+    if(itemDayStart >= monthAgoStart && itemDayStart <= todayStart){
+      monthCount++;
+      if(item.plate){
+        plateCounts30[item.plate] = (plateCounts30[item.plate] || 0) + 1;
+      }
+    }
+  }
+
+  statToday.textContent = todayCount;
+  statWeek.textContent = weekCount;
+  statMonth.textContent = monthCount;
+  statAll.textContent = arr.length;
+
+  /* ---- oxirgi 7 kunlik ustunli diagramma ---- */
+  statsWeekChart.innerHTML = "";
+  var maxDayCount = 1;
+  var d;
+  for(d = 0; d < 7; d++){
+    var ds = weekAgoStart + d * dayMs;
+    if((dayBuckets[ds] || 0) > maxDayCount){ maxDayCount = dayBuckets[ds]; }
+  }
+  for(d = 0; d < 7; d++){
+    var ds2 = weekAgoStart + d * dayMs;
+    var cnt = dayBuckets[ds2] || 0;
+    var pct = Math.round((cnt / maxDayCount) * 100);
+    if(cnt > 0 && pct < 6){ pct = 6; }
+    var wd = new Date(ds2).getDay();
+    var col = document.createElement("span");
+    col.className = "statBarCol";
+    var numEl = document.createElement("span");
+    numEl.className = "statBarNum";
+    numEl.textContent = cnt;
+    var barEl = document.createElement("span");
+    barEl.className = "statBar" + (ds2 === todayStart ? " today" : "");
+    barEl.style.height = pct + "%";
+    var lblEl = document.createElement("span");
+    lblEl.className = "statBarLabel";
+    lblEl.textContent = STATS_WEEKDAY_LABELS[wd];
+    col.appendChild(numEl);
+    col.appendChild(barEl);
+    col.appendChild(lblEl);
+    statsWeekChart.appendChild(col);
+  }
+
+  /* ---- bugungi soatlik diagramma (06:00-23:00) ---- */
+  statsHourChart.innerHTML = "";
+  var startHour = 6, endHour = 23;
+  var maxHourCount = 1;
+  var h;
+  for(h = startHour; h <= endHour; h++){
+    if(hourBuckets[h] > maxHourCount){ maxHourCount = hourBuckets[h]; }
+  }
+  for(h = startHour; h <= endHour; h++){
+    var hc = hourBuckets[h];
+    var hpct = Math.round((hc / maxHourCount) * 100);
+    if(hc > 0 && hpct < 6){ hpct = 6; }
+    var hcol = document.createElement("span");
+    hcol.className = "statBarCol";
+    var hnum = document.createElement("span");
+    hnum.className = "statBarNum";
+    hnum.textContent = hc > 0 ? hc : "";
+    var hbar = document.createElement("span");
+    hbar.className = "statBar today";
+    hbar.style.height = hpct + "%";
+    var hlbl = document.createElement("span");
+    hlbl.className = "statBarLabel";
+    hlbl.textContent = pad(h);
+    hcol.appendChild(hnum);
+    hcol.appendChild(hbar);
+    hcol.appendChild(hlbl);
+    statsHourChart.appendChild(hcol);
+  }
+
+  /* ---- eng ko'p qaytalangan raqamlar (oxirgi 30 kun) ---- */
+  statsTopPlates.innerHTML = "";
+  var plateKeys = Object.keys(plateCounts30);
+  plateKeys.sort(function(a, b){ return plateCounts30[b] - plateCounts30[a]; });
+  var topKeys = plateKeys.slice(0, 5);
+
+  if(arr.length === 0){
+    statsEmpty.style.display = "block";
+  } else {
+    statsEmpty.style.display = "none";
+  }
+
+  for(i = 0; i < topKeys.length; i++){
+    var pk = topKeys[i];
+    var li = document.createElement("li");
+    var rankEl = document.createElement("span");
+    rankEl.className = "statRank";
+    rankEl.textContent = (i + 1);
+    var nameEl = document.createElement("span");
+    nameEl.className = "statPlateName";
+    nameEl.textContent = pk;
+    var countEl = document.createElement("span");
+    countEl.className = "statPlateCount";
+    countEl.textContent = plateCounts30[pk] + " marta";
+    li.appendChild(rankEl);
+    li.appendChild(nameEl);
+    li.appendChild(countEl);
+    statsTopPlates.appendChild(li);
+  }
+  if(topKeys.length === 0 && arr.length > 0){
+    var noneLi = document.createElement("li");
+    noneLi.textContent = "Oxirgi 30 kunda takrorlangan raqam yo'q.";
+    noneLi.style.color = "var(--muted)";
+    noneLi.style.fontSize = "12px";
+    statsTopPlates.appendChild(noneLi);
+  }
+}
 
 /* ================= YUBORILMAGAN RASMLAR NAVBATI ================= */
 function loadPending(){
@@ -1582,6 +2619,15 @@ function updatePendingBar(){
     pendingText.textContent = arr.length + " ta yuborilmagan rasm navbatda";
   } else {
     pendingBar.classList.remove("show");
+  }
+  if(arr.length > 0){
+    tabPendingCount.style.display = "inline-block";
+    tabPendingCount.textContent = arr.length;
+  } else {
+    tabPendingCount.style.display = "none";
+  }
+  if(pendingPanel.style.display !== "none"){
+    renderPendingList();
   }
 }
 function queuePending(dataUrl, caption, filename, meta){
@@ -1655,6 +2701,402 @@ setInterval(function(){
   if(navigator.onLine !== false){ retryPendingQueue(); }
 }, 25000);
 updatePendingBar();
+
+/* ---------- YUBORILMAGAN RASMLAR PANELI (har birini alohida yuborish/o'chirish) ---------- */
+function renderPendingList(){
+  var arr = loadPending();
+  pendingCount.textContent = "Yuborilmagan rasmlar: " + arr.length + " ta";
+  pendingList.innerHTML = "";
+
+  if(arr.length === 0){
+    emptyPending.style.display = "block";
+    return;
+  }
+  emptyPending.style.display = "none";
+
+  var i;
+  for(i = arr.length - 1; i >= 0; i--){
+    var entry = arr[i];
+    var li = document.createElement("li");
+    li.setAttribute("data-added-at", entry.addedAt);
+
+    var thumbBtn = document.createElement("button");
+    thumbBtn.type = "button";
+    thumbBtn.className = "pendingThumbBtn";
+    var img = document.createElement("img");
+    img.src = entry.dataUrl;
+    thumbBtn.appendChild(img);
+    thumbBtn.addEventListener("click", (function(dataUrl, caption){
+      return function(){
+        viewerImg.src = dataUrl;
+        viewerCaption.textContent = caption;
+        imgViewer.classList.add("show");
+      };
+    })(entry.dataUrl, entry.caption));
+
+    var plateSpan = document.createElement("span");
+    plateSpan.className = "plate";
+    plateSpan.textContent = (entry.meta && entry.meta.plate) ? entry.meta.plate : "(raqamsiz)";
+
+    var timeSpan = document.createElement("span");
+    timeSpan.className = "time";
+    timeSpan.textContent = "Navbatga qo'shildi: " + new Date(entry.addedAt).toLocaleString();
+
+    var sendBtn = document.createElement("button");
+    sendBtn.type = "button";
+    sendBtn.className = "sendOnePendingBtn";
+    sendBtn.textContent = "📤 Yuborish";
+    sendBtn.setAttribute("data-added-at", entry.addedAt);
+
+    var deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "deletePendingBtn";
+    deleteBtn.textContent = "🗑";
+    deleteBtn.setAttribute("data-added-at", entry.addedAt);
+
+    li.appendChild(thumbBtn);
+    li.appendChild(plateSpan);
+    li.appendChild(sendBtn);
+    li.appendChild(deleteBtn);
+    li.appendChild(timeSpan);
+    pendingList.appendChild(li);
+  }
+}
+
+function sendOnePending(addedAt, btnEl){
+  var arr = loadPending();
+  var idx = -1;
+  var i;
+  for(i = 0; i < arr.length; i++){
+    if(String(arr[i].addedAt) === String(addedAt)){ idx = i; break; }
+  }
+  if(idx === -1){ return; }
+  var entry = arr[idx];
+
+  if(btnEl){
+    btnEl.disabled = true;
+    btnEl.textContent = "Yuborilmoqda...";
+  }
+
+  var blob = dataUrlToBlob(entry.dataUrl);
+  sendToTelegram(blob, entry.caption, entry.filename).then(function(data){
+    if(data && data.ok){
+      var freshArr = loadPending();
+      var newArr = freshArr.filter(function(it){ return String(it.addedAt) !== String(addedAt); });
+      savePending(newArr);
+      updatePendingBar();
+      renderPendingList();
+      showToast((entry.meta && entry.meta.plate ? entry.meta.plate : "Rasm") + " muvaffaqiyatli yuborildi", false);
+    } else {
+      if(btnEl){
+        btnEl.disabled = false;
+        btnEl.textContent = "📤 Yuborish";
+      }
+      showToast("Yuborilmadi, qaytadan urinib ko'ring", true);
+    }
+  }).catch(function(){
+    if(btnEl){
+      btnEl.disabled = false;
+      btnEl.textContent = "📤 Yuborish";
+    }
+    showToast("Tarmoq xatoligi, qaytadan urinib ko'ring", true);
+  });
+}
+
+function deleteOnePending(addedAt){
+  var okDel = confirm("Ushbu yuborilmagan rasmni navbatdan butunlay o'chirmoqchimisiz? Bu amalni orqaga qaytarib bo'lmaydi.");
+  if(!okDel){ return; }
+  var arr = loadPending();
+  var newArr = arr.filter(function(it){ return String(it.addedAt) !== String(addedAt); });
+  savePending(newArr);
+  updatePendingBar();
+  renderPendingList();
+  showToast("Yuborilmagan rasm o'chirildi", false);
+}
+
+pendingList.addEventListener("click", function(e){
+  var sendBtn = e.target.closest(".sendOnePendingBtn");
+  if(sendBtn){
+    sendOnePending(sendBtn.getAttribute("data-added-at"), sendBtn);
+    return;
+  }
+  var delBtn = e.target.closest(".deletePendingBtn");
+  if(delBtn){
+    deleteOnePending(delBtn.getAttribute("data-added-at"));
+    return;
+  }
+});
+
+sendAllPendingBtn.addEventListener("click", function(){
+  sendAllPendingBtn.disabled = true;
+  sendAllPendingBtn.textContent = "Yuborilmoqda...";
+  setStatus("Navbat qayta yuborilmoqda...", "sending");
+  retryPendingQueue();
+  var checkDone = setInterval(function(){
+    if(!retryingPending){
+      clearInterval(checkDone);
+      sendAllPendingBtn.disabled = false;
+      sendAllPendingBtn.textContent = "📤 Barchasini yuborish";
+      renderPendingList();
+    }
+  }, 400);
+});
+
+/* ================= TUNGI REJIM (DARK MODE) ================= */
+var DARK_MODE_KEY = "katlavan_dark_mode";
+
+function isDarkModeOn(){
+  return document.documentElement.classList.contains("darkMode");
+}
+function applyDarkMode(isDark){
+  if(isDark){
+    document.documentElement.classList.add("darkMode");
+  } else {
+    document.documentElement.classList.remove("darkMode");
+  }
+  if(darkModeToggle){
+    darkModeToggle.setAttribute("aria-pressed", isDark ? "true" : "false");
+  }
+  if(themeColorMeta){
+    themeColorMeta.setAttribute("content", isDark ? "#0a121d" : "#0d3f78");
+  }
+}
+function loadDarkModePref(){
+  try{
+    return localStorage.getItem(DARK_MODE_KEY) === "1";
+  }catch(e){ return false; }
+}
+function saveDarkModePref(isDark){
+  try{ localStorage.setItem(DARK_MODE_KEY, isDark ? "1" : "0"); }catch(e){}
+}
+if(darkModeToggle){
+  darkModeToggle.addEventListener("click", function(){
+    var next = !isDarkModeOn();
+    applyDarkMode(next);
+    saveDarkModePref(next);
+  });
+}
+/* sahifa yuklanishida (<head> skripti orqali) allaqachon qo'llanilgan bo'lishi mumkin,
+   shu bois tugma holatini shunga moslab sinxronlaymiz */
+applyDarkMode(isDarkModeOn());
+
+/* ================= SOZLAMALAR PANELI ================= */
+function setSettingsStatus(text, state){
+  settingsStatus.textContent = text;
+  settingsStatus.setAttribute("data-state", state || "");
+}
+
+function loadSettingsIntoForm(){
+  botTokenInput.value = BOT_TOKEN;
+  chatIdInput.value = CHAT_ID;
+  newPinInput.value = "";
+  setSettingsStatus("", "");
+}
+
+toggleBotTokenBtn.addEventListener("click", function(){
+  botTokenInput.type = (botTokenInput.type === "password") ? "text" : "password";
+});
+toggleNewPinBtn.addEventListener("click", function(){
+  newPinInput.type = (newPinInput.type === "password") ? "text" : "password";
+});
+
+saveSettingsBtn.addEventListener("click", function(){
+  var newToken = botTokenInput.value.trim();
+  var newChatId = chatIdInput.value.trim();
+  var newPin = newPinInput.value.trim();
+
+  if(newToken === ""){
+    setSettingsStatus("Bot Token bo'sh bo'lishi mumkin emas.", "error");
+    botTokenInput.focus();
+    return;
+  }
+  if(newChatId === ""){
+    setSettingsStatus("Chat ID bo'sh bo'lishi mumkin emas.", "error");
+    chatIdInput.focus();
+    return;
+  }
+  if(newPin !== "" && !/^[0-9]{4,6}$/.test(newPin)){
+    setSettingsStatus("PIN kod 4 dan 6 tagacha raqamdan iborat bo'lishi kerak.", "error");
+    newPinInput.focus();
+    return;
+  }
+
+  BOT_TOKEN = newToken;
+  CHAT_ID = newChatId;
+  localStorage.setItem(BOT_TOKEN_KEY, BOT_TOKEN);
+  localStorage.setItem(CHAT_ID_KEY, CHAT_ID);
+
+  if(newPin !== ""){
+    APP_PIN = newPin;
+    localStorage.setItem(PIN_KEY, APP_PIN);
+  }
+
+  newPinInput.value = "";
+  setSettingsStatus("Sozlamalar saqlandi.", "ok");
+  showToast("Sozlamalar muvaffaqiyatli saqlandi", false);
+});
+
+testConnectionBtn.addEventListener("click", function(){
+  var testToken = botTokenInput.value.trim();
+  var testChatId = chatIdInput.value.trim();
+
+  if(testToken === "" || testChatId === ""){
+    setSettingsStatus("Tekshirish uchun Bot Token va Chat ID to'ldirilishi kerak.", "error");
+    return;
+  }
+
+  testConnectionBtn.disabled = true;
+  saveSettingsBtn.disabled = true;
+  setSettingsStatus("Ulanish tekshirilmoqda...", "");
+
+  fetch("https://api.telegram.org/bot" + testToken + "/getMe")
+    .then(function(res){ return res.json(); })
+    .then(function(botData){
+      if(!(botData && botData.ok)){
+        throw new Error("BOT_TOKEN_INVALID");
+      }
+      var msgUrl = "https://api.telegram.org/bot" + testToken + "/sendMessage";
+      return fetch(msgUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: testChatId, text: "✅ KATLAVAN NAZORAT — ulanish testi muvaffaqiyatli." })
+      }).then(function(res){ return res.json(); });
+    })
+    .then(function(msgData){
+      testConnectionBtn.disabled = false;
+      saveSettingsBtn.disabled = false;
+      if(msgData && msgData.ok){
+        setSettingsStatus("✅ Ulanish muvaffaqiyatli! Test xabari yuborildi.", "ok");
+        showToast("Ulanish tekshirildi: muvaffaqiyatli", false);
+      } else {
+        setSettingsStatus("Bot Token to'g'ri, lekin Chat ID xato yoki bot guruhga qo'shilmagan.", "error");
+        showToast("Chat ID xato bo'lishi mumkin", true);
+      }
+    })
+    .catch(function(err){
+      testConnectionBtn.disabled = false;
+      saveSettingsBtn.disabled = false;
+      if(err && err.message === "BOT_TOKEN_INVALID"){
+        setSettingsStatus("Bot Token noto'g'ri.", "error");
+      } else {
+        setSettingsStatus("Tarmoq xatoligi, internetni tekshiring.", "error");
+      }
+      showToast("Ulanishni tekshirishda xatolik", true);
+    });
+});
+
+resetSettingsBtn.addEventListener("click", function(){
+  var okReset = confirm("Bot Token, Chat ID va PIN kodni standart (dastlabki) holatiga qaytarmoqchimisiz?");
+  if(!okReset){ return; }
+  localStorage.removeItem(BOT_TOKEN_KEY);
+  localStorage.removeItem(CHAT_ID_KEY);
+  localStorage.removeItem(PIN_KEY);
+  BOT_TOKEN = DEFAULT_BOT_TOKEN;
+  CHAT_ID = DEFAULT_CHAT_ID;
+  APP_PIN = DEFAULT_APP_PIN;
+  loadSettingsIntoForm();
+  setSettingsStatus("Standart sozlamalarga qaytarildi.", "ok");
+  showToast("Sozlamalar standart holatga qaytarildi", false);
+});
+
+lockAppBtn.addEventListener("click", function(){
+  var okLock = confirm("Ilovani qulflab, chatdan chiqmoqchimisiz? Qayta kirish uchun PIN kod so'raladi.");
+  if(!okLock){ return; }
+  localStorage.removeItem("katlavanUnlocked");
+  location.reload();
+});
+
+/* ---------- ZAXIRA NUSXA (BACKUP / RESTORE) ---------- */
+function setBackupStatus(text, state){
+  backupStatus.textContent = text;
+  backupStatus.setAttribute("data-state", state || "");
+}
+
+function exportBackup(){
+  try{
+    var backup = {
+      appName: "KATLAVAN_NAZORAT",
+      backupVersion: 1,
+      exportedAt: new Date().toISOString(),
+      history: loadHistory(),
+      trash: loadTrash(),
+      pending: loadPending(),
+      operatorName: operatorName,
+      botToken: BOT_TOKEN,
+      chatId: CHAT_ID,
+      appPin: APP_PIN
+    };
+    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    a.href = url;
+    a.download = "katlavan-zaxira-" + stamp + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+    setBackupStatus("Zaxira fayli yuklab olindi.", "ok");
+    showToast("Zaxira nusxa muvaffaqiyatli saqlandi", false);
+  }catch(err){
+    setBackupStatus("Zaxira faylini yaratishda xatolik yuz berdi.", "error");
+    showToast("Zaxira qilishda xatolik", true);
+  }
+}
+exportBackupBtn.addEventListener("click", exportBackup);
+
+importBackupBtn.addEventListener("click", function(){
+  importBackupFile.value = "";
+  importBackupFile.click();
+});
+
+importBackupFile.addEventListener("change", function(){
+  var file = importBackupFile.files && importBackupFile.files[0];
+  if(!file){ return; }
+
+  var okConfirm = confirm("Diqqat! Zaxiradan tiklash joriy barcha ma'lumotlarni (tarix, savat, navbat, sozlamalar) ushbu fayldagi ma'lumotlar bilan almashtiradi. Bu amalni orqaga qaytarib bo'lmaydi. Davom etasizmi?");
+  if(!okConfirm){
+    importBackupFile.value = "";
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var data = JSON.parse(e.target.result);
+      if(!data || typeof data !== "object"){
+        throw new Error("Fayl formati noto'g'ri");
+      }
+
+      if(Array.isArray(data.history)){ saveHistory(data.history); }
+      if(Array.isArray(data.trash)){ saveTrash(data.trash); }
+      if(Array.isArray(data.pending)){ savePending(data.pending); }
+      if(typeof data.operatorName === "string" && data.operatorName.trim() !== ""){
+        localStorage.setItem(NAME_KEY, data.operatorName.trim());
+      }
+      if(typeof data.botToken === "string" && data.botToken.trim() !== ""){
+        localStorage.setItem(BOT_TOKEN_KEY, data.botToken.trim());
+      }
+      if(typeof data.chatId === "string" && data.chatId.trim() !== ""){
+        localStorage.setItem(CHAT_ID_KEY, data.chatId.trim());
+      }
+      if(typeof data.appPin === "string" && /^[0-9]{4,6}$/.test(data.appPin.trim())){
+        localStorage.setItem(PIN_KEY, data.appPin.trim());
+      }
+
+      setBackupStatus("Zaxiradan tiklandi. Ilova qayta yuklanmoqda...", "ok");
+      showToast("Zaxiradan muvaffaqiyatli tiklandi", false);
+      setTimeout(function(){ location.reload(); }, 1200);
+    }catch(err){
+      setBackupStatus("Zaxira faylini o'qib bo'lmadi: fayl buzilgan yoki noto'g'ri formatda.", "error");
+      showToast("Zaxira faylida xatolik", true);
+    }
+  };
+  reader.onerror = function(){
+    setBackupStatus("Faylni o'qib bo'lmadi.", "error");
+  };
+  reader.readAsText(file);
+});
 
 /* ================= RASMGA OLISH VA YUBORISH ================= */
 function setStatus(text, state){
@@ -1970,6 +3412,26 @@ function initAppAfterUnlock(){
   updateGps();
   retryPendingQueue();
 }
+/* ================= SERVICE WORKER RO'YXATDAN O'TKAZISH (OFFLINE ISHLASH UCHUN) ================= */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(err){
+      console.warn("Service worker ro'yxatdan o'tmadi:", err);
+    });
+  });
+}
+
+function updateOfflineBadge(){
+  if(navigator.onLine){
+    document.body.classList.remove("offlineMode");
+  } else {
+    document.body.classList.add("offlineMode");
+  }
+}
+window.addEventListener("online", updateOfflineBadge);
+window.addEventListener("offline", updateOfflineBadge);
+updateOfflineBadge();
+
 if(checkUnlocked() && hasOperatorName()){
   initAppAfterUnlock();
 }
