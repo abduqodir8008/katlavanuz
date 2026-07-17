@@ -188,6 +188,52 @@ button#switchCamBtn{
   box-shadow:0 3px 10px rgba(0,0,0,.3);
 }
 video.mirrored{transform:scaleX(-1);}
+#galleryPreviewImg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:4;
+  display:none;
+  background:#0b1520;
+}
+#galleryBtn{
+  position:absolute;
+  top:12px;left:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;height:36px;
+  background:rgba(13,63,120,.78);
+  border:none;
+  border-radius:50%;
+  color:#ffffff;
+  font-size:16px;
+  cursor:pointer;
+  z-index:5;
+  box-shadow:0 3px 10px rgba(0,0,0,.3);
+}
+#galleryBtn:disabled{filter:grayscale(.4) brightness(.9);cursor:progress;}
+#galleryCancelBtn{
+  position:absolute;
+  top:12px;right:12px;
+  display:none;
+  align-items:center;
+  gap:5px;
+  background:rgba(182,42,42,.85);
+  border:none;
+  border-radius:22px;
+  color:#ffffff;
+  font-family:'Manrope',sans-serif;
+  font-size:11.5px;
+  font-weight:700;
+  letter-spacing:.2px;
+  padding:7px 13px;
+  cursor:pointer;
+  z-index:6;
+  box-shadow:0 3px 10px rgba(0,0,0,.3);
+}
 #plateHint{
   position:absolute;
   left:50%;bottom:14px;
@@ -1424,8 +1470,12 @@ ul#historyList li span.pendingTag{
 
 <span id="camWrap">
 <video id="cam" autoplay playsinline muted></video>
+<img id="galleryPreviewImg" alt="">
 <span id="gpsBadge">GPS: qidirilmoqda...</span>
+<button id="galleryBtn" type="button" title="Galereyadan rasm tanlash">&#128444;</button>
 <button id="switchCamBtn" type="button">&#8635; <span id="switchCamLabel">Old kameraga o'tish</span></button>
+<button id="galleryCancelBtn" type="button">&#10005; Bekor qilish</button>
+<input type="file" id="galleryInput" accept="image/*" style="display:none;">
 <span id="reticleTL"></span>
 <span id="reticleTR"></span>
 <span id="reticleBL"></span>
@@ -1445,7 +1495,7 @@ ul#historyList li span.pendingTag{
 <button id="autoReadBtn" type="button" title="Kameradan avtomatik o'qish">&#128269;<span id="autoReadLabel">Avto</span></button>
 <label class="fieldLabel" for="noteInput">Izoh (ixtiyoriy)</label>
 <input id="noteInput" type="text" placeholder="Masalan: haydovchi ismi, obyekt nomi...">
-<button id="captureBtn" type="button">&#128247; RASMGA OLISH VA YUBORISH</button>
+<button id="captureBtn" type="button">&#128247; <span id="captureBtnLabel">RASMGA OLISH VA YUBORISH</span></button>
 </span>
 
 <span id="status" data-state="idle">Kamera tayyorlanmoqda...</span>
@@ -1621,11 +1671,16 @@ var videoEl = document.getElementById("cam");
 var canvasEl = document.getElementById("canvas");
 var switchCamBtn = document.getElementById("switchCamBtn");
 var switchCamLabel = document.getElementById("switchCamLabel");
+var galleryBtn = document.getElementById("galleryBtn");
+var galleryInput = document.getElementById("galleryInput");
+var galleryPreviewImg = document.getElementById("galleryPreviewImg");
+var galleryCancelBtn = document.getElementById("galleryCancelBtn");
 var plateInput = document.getElementById("plateInput");
 var autoReadBtn = document.getElementById("autoReadBtn");
 var autoReadLabel = document.getElementById("autoReadLabel");
 var noteInput = document.getElementById("noteInput");
 var captureBtn = document.getElementById("captureBtn");
+var captureBtnLabel = document.getElementById("captureBtnLabel");
 var statusEl = document.getElementById("status");
 var clockEl = document.getElementById("clock");
 var gpsBadge = document.getElementById("gpsBadge");
@@ -1859,6 +1914,9 @@ function updateGps(){
 /* ================= KAMERA ================= */
 var currentFacing = "environment";
 var currentStream = null;
+var galleryImageEl = null;
+var CAPTURE_BTN_DEFAULT_LABEL = "RASMGA OLISH VA YUBORISH";
+var CAPTURE_BTN_GALLERY_LABEL = "TASDIQLASH VA YUBORISH";
 
 function startCamera(facing){
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
@@ -3217,9 +3275,7 @@ function formatPlateForDisplay(plate){
   return plate;
 }
 
-function buildOcrCanvas(){
-  var w = videoEl.videoWidth;
-  var h = videoEl.videoHeight;
+function buildOcrCanvasFromSource(sourceEl, w, h){
   if(!w || !h){ return null; }
 
   var oc = document.createElement("canvas");
@@ -3228,7 +3284,7 @@ function buildOcrCanvas(){
   oc.width = w * scale;
   oc.height = h * scale;
   var octx = oc.getContext("2d");
-  octx.drawImage(videoEl, 0, 0, oc.width, oc.height);
+  octx.drawImage(sourceEl, 0, 0, oc.width, oc.height);
 
   /* kulrang + kontrastni oshirish, OCR aniqligi uchun */
   var imgData = octx.getImageData(0, 0, oc.width, oc.height);
@@ -3245,6 +3301,115 @@ function buildOcrCanvas(){
   octx.putImageData(imgData, 0, 0);
   return oc;
 }
+
+function buildOcrCanvas(){
+  return buildOcrCanvasFromSource(videoEl, videoEl.videoWidth, videoEl.videoHeight);
+}
+
+/* ================= GALEREYADAN RASM TANLASH ================= */
+function setCaptureModeGallery(isGallery){
+  captureBtnLabel.textContent = isGallery ? CAPTURE_BTN_GALLERY_LABEL : CAPTURE_BTN_DEFAULT_LABEL;
+}
+
+function cancelGalleryImage(silent){
+  galleryImageEl = null;
+  galleryPreviewImg.src = "";
+  galleryPreviewImg.style.display = "none";
+  galleryCancelBtn.style.display = "none";
+  switchCamBtn.style.display = "flex";
+  galleryBtn.style.display = "flex";
+  autoReadBtn.disabled = false;
+  setCaptureModeGallery(false);
+  if(!silent){
+    setStatus("Kamera rejimiga qaytildi.", "idle");
+  }
+}
+
+function runGalleryOcr(img){
+  if(typeof Tesseract === "undefined"){
+    setStatus("OCR kutubxonasi yuklanmadi. Raqamni qo'lda kiriting.", "error");
+    return;
+  }
+  if(ocrBusy){ return; }
+
+  var ocrCanvas = buildOcrCanvasFromSource(img, img.naturalWidth, img.naturalHeight);
+  if(!ocrCanvas){
+    setStatus("Rasmdan kadr olib bo'lmadi. Raqamni qo'lda kiriting.", "error");
+    return;
+  }
+
+  ocrBusy = true;
+  autoReadBtn.disabled = true;
+
+  Tesseract.recognize(ocrCanvas, "eng", {
+    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  }).then(function(result){
+    var rawText = (result && result.data && result.data.text) ? result.data.text : "";
+    var cleaned = cleanOcrText(rawText);
+
+    if(cleaned === ""){
+      setStatus("Raqam avtomatik aniqlanmadi. Iltimos, qo'lda kiriting.", "error");
+      showToast("Galereya rasmidan raqam aniqlanmadi, qo'lda kiriting", true);
+      plateInput.focus();
+    } else {
+      var candidate = extractPlateFromText(cleaned);
+      var displayValue = formatPlateForDisplay(candidate);
+      plateInput.value = displayValue;
+      if(isPlateLikelyValid(displayValue)){
+        setStatus("Raqam aniqlandi: " + displayValue + ". Tekshirib, yuboring.", "ok");
+        showToast("Aniqlandi: " + displayValue, false);
+      } else {
+        setStatus("Taxminiy o'qildi: " + displayValue + ". Tekshirib to'g'irlang.", "error");
+        showToast("Aniq o'qilmadi, tekshiring: " + displayValue, true);
+      }
+      plateInput.focus();
+    }
+  }).catch(function(err){
+    setStatus("OCR xatoligi: " + (err && err.message ? err.message : "noma'lum") + ". Raqamni qo'lda kiriting.", "error");
+  }).finally(function(){
+    ocrBusy = false;
+    autoReadBtn.disabled = !!galleryImageEl;
+  });
+}
+
+galleryBtn.addEventListener("click", function(){
+  if(isSending){ return; }
+  galleryInput.value = "";
+  galleryInput.click();
+});
+
+galleryInput.addEventListener("change", function(){
+  var file = galleryInput.files && galleryInput.files[0];
+  if(!file){ return; }
+
+  var reader = new FileReader();
+  reader.onload = function(){
+    var img = new Image();
+    img.onload = function(){
+      galleryImageEl = img;
+      galleryPreviewImg.src = reader.result;
+      galleryPreviewImg.style.display = "block";
+      galleryCancelBtn.style.display = "flex";
+      switchCamBtn.style.display = "none";
+      galleryBtn.style.display = "none";
+      setCaptureModeGallery(true);
+      setStatus("Galereyadan rasm tanlandi. Raqam avtomatik aniqlanmoqda...", "sending");
+      runGalleryOcr(img);
+    };
+    img.onerror = function(){
+      setStatus("Bu rasmni ochib bo'lmadi, boshqasini tanlang.", "error");
+    };
+    img.src = reader.result;
+  };
+  reader.onerror = function(){
+    setStatus("Faylni o'qib bo'lmadi.", "error");
+  };
+  reader.readAsDataURL(file);
+});
+
+galleryCancelBtn.addEventListener("click", function(){
+  cancelGalleryImage();
+});
 
 autoReadBtn.addEventListener("click", function(){
   if(ocrBusy){ return; }
@@ -3303,6 +3468,7 @@ autoReadBtn.addEventListener("click", function(){
 captureBtn.addEventListener("click", function(){
   if(isSending){ return; }
 
+  var usingGallery = !!galleryImageEl;
   var plateValue = plateInput.value.trim().toUpperCase();
   var noteValue = noteInput.value.trim();
 
@@ -3311,8 +3477,13 @@ captureBtn.addEventListener("click", function(){
     plateInput.focus();
     return;
   }
-  if(!videoEl.videoWidth){
-    setStatus("Kamera hali tayyor emas, biroz kuting.", "error");
+
+  var srcEl = usingGallery ? galleryImageEl : videoEl;
+  var srcW = usingGallery ? galleryImageEl.naturalWidth : videoEl.videoWidth;
+  var srcH = usingGallery ? galleryImageEl.naturalHeight : videoEl.videoHeight;
+
+  if(!srcW || !srcH){
+    setStatus(usingGallery ? "Rasm hali tayyor emas, biroz kuting." : "Kamera hali tayyor emas, biroz kuting.", "error");
     return;
   }
 
@@ -3327,14 +3498,14 @@ captureBtn.addEventListener("click", function(){
     if(!okDup){ return; }
   }
 
-  var w = videoEl.videoWidth;
-  var h = videoEl.videoHeight;
+  var w = srcW;
+  var h = srcH;
   canvasEl.width = w;
   canvasEl.height = h;
   var ctx = canvasEl.getContext("2d");
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(videoEl, 0, 0, w, h);
+  ctx.drawImage(srcEl, 0, 0, w, h);
 
   var now = getNowStrings();
   stampImage(ctx, w, h, plateValue, noteValue, now.time, now.date, operatorName);
@@ -3347,12 +3518,16 @@ captureBtn.addEventListener("click", function(){
   if(operatorName){
     caption = caption + "\nRasmga oldi: " + operatorName;
   }
+  if(usingGallery){
+    caption = caption + "\nManba: Galereyadan tanlandi";
+  }
   if(lastLat && lastLon){
     caption = caption + "\nJoylashuv: https://maps.google.com/?q=" + lastLat + "," + lastLon;
   }
 
   isSending = true;
   captureBtn.disabled = true;
+  galleryBtn.disabled = true;
   setStatus("Yuborilmoqda...", "sending");
 
   var quality = getJpegQuality();
@@ -3362,6 +3537,7 @@ captureBtn.addEventListener("click", function(){
       setStatus("Rasmni tayyorlashda xatolik yuz berdi.", "error");
       isSending = false;
       captureBtn.disabled = false;
+      galleryBtn.disabled = false;
       return;
     }
 
@@ -3378,12 +3554,14 @@ captureBtn.addEventListener("click", function(){
       .then(function(data){
         isSending = false;
         captureBtn.disabled = false;
+        galleryBtn.disabled = false;
         if(data && data.ok){
           setStatus("Yuborildi: " + plateValue + " (" + now.time + ")", "ok");
           showToast(plateValue + " muvaffaqiyatli yuborildi (" + now.time + ")", false);
           addHistoryEntry(thumbDataUrl, plateValue, noteValue, now.time, now.date, lastLat, lastLon);
           plateInput.value = "";
           noteInput.value = "";
+          if(usingGallery){ cancelGalleryImage(true); }
         } else {
           var desc = (data && data.description) ? data.description : "Noma'lum xatolik";
           setStatus("Yuborilmadi, navbatga qo'shildi: " + desc, "error");
@@ -3394,6 +3572,7 @@ captureBtn.addEventListener("click", function(){
             addHistoryEntry(thumbDataUrl, plateValue, noteValue, now.time, now.date, lastLat, lastLon);
             plateInput.value = "";
             noteInput.value = "";
+            if(usingGallery){ cancelGalleryImage(true); }
           };
           fr.readAsDataURL(blob);
         }
@@ -3401,6 +3580,7 @@ captureBtn.addEventListener("click", function(){
       .catch(function(err){
         isSending = false;
         captureBtn.disabled = false;
+        galleryBtn.disabled = false;
         setStatus("Tarmoq xatoligi, rasm navbatga qo'shildi: " + err.message, "error");
         showToast(plateValue + " uchun tarmoq xatoligi, navbatga qo'shildi", true);
         var fr2 = new FileReader();
@@ -3409,6 +3589,7 @@ captureBtn.addEventListener("click", function(){
           addHistoryEntry(thumbDataUrl, plateValue, noteValue, now.time, now.date, lastLat, lastLon);
           plateInput.value = "";
           noteInput.value = "";
+          if(usingGallery){ cancelGalleryImage(true); }
         };
         fr2.readAsDataURL(blob);
       });
