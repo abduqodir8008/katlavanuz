@@ -4,7 +4,7 @@
    Telegramga rasm/xabar yuborish har doim tarmoq orqali (network-only) bajariladi;
    agar internet bo'lmasa, bu so'rovlar ilova ichidagi navbatga (localStorage queue) tushadi. */
 
-var CACHE_NAME = "katlavan-shell-v2";
+var CACHE_NAME = "katlavan-shell-v3";
 var APP_SHELL = [
   "./",
   "./index.html",
