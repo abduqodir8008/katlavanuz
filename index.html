@@ -1869,8 +1869,9 @@ function startCamera(facing){
     currentStream.getTracks().forEach(function(track){ track.stop(); });
     currentStream = null;
   }
-  var constraints = { video: { facingMode: { ideal: facing }, width: { ideal: 2560 }, height: { ideal: 1440 } }, audio: false };
-  navigator.mediaDevices.getUserMedia(constraints).then(function(stream){
+  setStatus("Kamera ochilmoqda...", "sending");
+
+  function onStreamReady(stream){
     currentStream = stream;
     videoEl.srcObject = stream;
     if(facing === "user"){
@@ -1881,8 +1882,17 @@ function startCamera(facing){
       switchCamLabel.textContent = "Old kameraga o'tish";
     }
     setStatus("Kamera tayyor. Raqamni ramka ichiga tushiring.", "idle");
-  }).catch(function(err){
-    setStatus("Kameraga ruxsat berilmadi: " + err.message, "error");
+  }
+
+  /* Tezroq ochilishi uchun o'rtacha (1920x1080) o'lcham so'raladi — 2560x1440 ba'zi qurilmalarda
+     kamerani sekin yoki muvaffaqiyatsiz ochishga sabab bo'lardi */
+  var constraints = { video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false };
+  navigator.mediaDevices.getUserMedia(constraints).then(onStreamReady).catch(function(err){
+    /* Ba'zi qurilmalar aniq o'lcham+facingMode birikmasini qo'llamaydi — soddaroq so'rov bilan qayta urinamiz */
+    var fallbackConstraints = { video: { facingMode: facing }, audio: false };
+    navigator.mediaDevices.getUserMedia(fallbackConstraints).then(onStreamReady).catch(function(err2){
+      setStatus("Kameraga ruxsat berilmadi: " + err2.message, "error");
+    });
   });
 }
 
