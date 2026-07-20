@@ -1665,7 +1665,7 @@ function stampImage(ctx, w, h, plate, note, time, date, operator, paymentStatus)
   if(paymentStatus){
     cursorY = cursorY + lineGap + noteFontSize;
     ctx.font = "800 " + noteFontSize + "px 'Manrope', Arial, sans-serif";
-    ctx.fillStyle = "#00FF66";
+    ctx.fillStyle = (paymentStatus === "Pul olmadi") ? "#FF3333" : "#00FF66";
     ctx.fillText("To'lov: " + paymentStatus, w * 0.035, cursorY);
   }
 
