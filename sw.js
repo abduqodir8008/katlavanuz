@@ -4,10 +4,17 @@
    Telegramga rasm/xabar yuborish har doim tarmoq orqali (network-only) bajariladi;
    agar internet bo'lmasa, bu so'rovlar ilova ichidagi navbatga (localStorage queue) tushadi. */
 
-var CACHE_NAME = "katlavan-shell-v3";
+var CACHE_NAME = "katlavan-shell-v5";
 var APP_SHELL = [
   "./",
   "./index.html",
+  "./tarix.html",
+  "./yuborilmagan.html",
+  "./ochirilganlar.html",
+  "./statistika.html",
+  "./sozlamalar.html",
+  "./style.css",
+  "./app.js",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
@@ -40,7 +47,8 @@ function isTelegramApi(url){
 function isFontOrExternal(url){
   return url.indexOf("fonts.googleapis.com") !== -1 ||
          url.indexOf("fonts.gstatic.com") !== -1 ||
-         url.indexOf("cdn.jsdelivr.net") !== -1;
+         url.indexOf("cdn.jsdelivr.net") !== -1 ||
+         url.indexOf("unpkg.com") !== -1;
 }
 
 self.addEventListener("fetch", function(event){
