@@ -94,6 +94,19 @@ var paySuccessBtn = document.getElementById("paySuccessBtn");
 var payFailBtn = document.getElementById("payFailBtn");
 var currentPaymentStatus = "Pul oldi";
 
+var blacklistPanel = document.getElementById("blacklistPanel");
+var tabBlacklistBtn = document.getElementById("tabBlacklistBtn");
+var blacklistAlertBanner = document.getElementById("blacklistAlertBanner");
+var quickBlockBtn = document.getElementById("quickBlockBtn");
+var blacklistPlateInput = document.getElementById("blacklistPlateInput");
+var blacklistReasonInput = document.getElementById("blacklistReasonInput");
+var addBlacklistBtn = document.getElementById("addBlacklistBtn");
+var blacklistSearch = document.getElementById("blacklistSearch");
+var blacklistList = document.getElementById("blacklistList");
+var emptyBlacklist = document.getElementById("emptyBlacklist");
+var blacklistCount = document.getElementById("blacklistCount");
+var g_blacklist = [];
+
 function setPaymentStatus(status){
   currentPaymentStatus = status;
   if(paySuccessBtn && payFailBtn){
@@ -113,6 +126,134 @@ if(paySuccessBtn){
 if(payFailBtn){
   payFailBtn.addEventListener("click", function(){ setPaymentStatus("Pul olmadi"); });
 }
+
+function loadBlacklist(){
+  return g_blacklist;
+}
+function saveBlacklist(arr){
+  g_blacklist = arr;
+  dbSet("blacklist", g_blacklist);
+}
+function isBlacklisted(plate){
+  var clean = plate.replace(/\s+/g, "").toUpperCase();
+  for(var i = 0; i < g_blacklist.length; i++){
+    var bClean = g_blacklist[i].plate.replace(/\s+/g, "").toUpperCase();
+    if(bClean === clean){
+      return g_blacklist[i];
+    }
+  }
+  return null;
+}
+function checkPlateBlacklist(){
+  if(!plateInput) return;
+  var val = plateInput.value;
+  var black = isBlacklisted(val);
+  if(black){
+    blacklistAlertBanner.style.display = "block";
+    blacklistAlertBanner.textContent = "⚠️ ZAPRET! Sabab: " + black.reason;
+  } else {
+    blacklistAlertBanner.style.display = "none";
+  }
+}
+if(plateInput){
+  plateInput.addEventListener("input", checkPlateBlacklist);
+}
+if(quickBlockBtn){
+  quickBlockBtn.addEventListener("click", function(){
+    var val = plateInput.value.trim().toUpperCase();
+    if(!val){
+      showToast("Avval raqamni yozing yoki skanerlang", true);
+      return;
+    }
+    var reason = prompt("Raqam: " + val + "\nTaqiqlash sababini yozing:", "Taqiq (qarz yoki buzilish)");
+    if(reason === null){ return; }
+    reason = reason.trim() || "Sabab ko'rsatilmadi";
+    var arr = loadBlacklist();
+    if(isBlacklisted(val)){
+      showToast("Bu raqam allaqachon bloklangan!", true);
+      return;
+    }
+    arr.push({ plate: val, reason: reason, addedAt: Date.now() });
+    saveBlacklist(arr);
+    renderBlacklistList();
+    checkPlateBlacklist();
+    showToast(val + " bloklandi!", false);
+  });
+}
+
+function renderBlacklistList(){
+  if(!blacklistList) return;
+  var arr = loadBlacklist();
+  blacklistList.innerHTML = "";
+  
+  var filter = blacklistSearch ? blacklistSearch.value.trim().toLowerCase() : "";
+  var filtered = arr;
+  if(filter){
+    filtered = arr.filter(function(item){
+      return item.plate.toLowerCase().indexOf(filter) !== -1 || item.reason.toLowerCase().indexOf(filter) !== -1;
+    });
+  }
+  
+  if(blacklistCount) blacklistCount.textContent = "Bloklangan mashinalar: " + arr.length + " ta";
+  if(emptyBlacklist) emptyBlacklist.style.display = filtered.length === 0 ? "block" : "none";
+  
+  for(var i = filtered.length - 1; i >= 0; i--){
+    var item = filtered[i];
+    var li = document.createElement("li");
+    
+    var plateSpan = document.createElement("span");
+    plateSpan.className = "plate";
+    plateSpan.textContent = item.plate;
+    
+    var unblockBtn = document.createElement("button");
+    unblockBtn.type = "button";
+    unblockBtn.className = "unblock-btn";
+    unblockBtn.textContent = "Blokdan yechish";
+    unblockBtn.setAttribute("data-plate", item.plate);
+    unblockBtn.addEventListener("click", function(e){
+      var p = e.target.getAttribute("data-plate");
+      if(confirm(p + " raqamini blokdan yechasizmi?")){
+        var bList = loadBlacklist();
+        bList = bList.filter(function(x){ return x.plate !== p; });
+        saveBlacklist(bList);
+        renderBlacklistList();
+        checkPlateBlacklist();
+        showToast(p + " blokdan yechildi", false);
+      }
+    });
+    
+    var reasonDiv = document.createElement("div");
+    reasonDiv.className = "reason";
+    reasonDiv.textContent = "Sababi: " + item.reason + " (Sana: " + new Date(item.addedAt).toLocaleDateString() + ")";
+    
+    li.appendChild(plateSpan);
+    li.appendChild(unblockBtn);
+    li.appendChild(reasonDiv);
+    blacklistList.appendChild(li);
+  }
+}
+
+if(blacklistSearch) blacklistSearch.addEventListener("input", renderBlacklistList);
+if(addBlacklistBtn) addBlacklistBtn.addEventListener("click", function(){
+  var pInput = blacklistPlateInput.value.trim().toUpperCase();
+  var rInput = blacklistReasonInput.value.trim() || "Sabab ko'rsatilmadi";
+  if(!pInput){
+    showToast("Raqamni kiriting", true);
+    return;
+  }
+  var arr = loadBlacklist();
+  if(isBlacklisted(pInput)){
+    showToast("Bu raqam allaqachon bloklangan!", true);
+    return;
+  }
+  arr.push({ plate: pInput, reason: rInput, addedAt: Date.now() });
+  saveBlacklist(arr);
+  blacklistPlateInput.value = "";
+  blacklistReasonInput.value = "";
+  renderBlacklistList();
+  checkPlateBlacklist();
+  showToast(pInput + " bloklandi!", false);
+});
 var captureBtnLabel = document.getElementById("captureBtnLabel");
 var statusEl = document.getElementById("status");
 var clockEl = document.getElementById("clock");
@@ -862,6 +1003,7 @@ function showMenuTab(tab){
   var trashPanel = document.getElementById("trashPanel");
   var statsPanel = document.getElementById("statsPanel");
   var settingsPanel = document.getElementById("settingsPanel");
+  var blacklistPanel = document.getElementById("blacklistPanel");
 
   var targetPanel = null;
   var targetUrl = "";
@@ -871,6 +1013,7 @@ function showMenuTab(tab){
   else if(tab === "trash"){ targetPanel = trashPanel; targetUrl = "ochirilganlar.html"; }
   else if(tab === "stats"){ targetPanel = statsPanel; targetUrl = "statistika.html"; }
   else if(tab === "settings"){ targetPanel = settingsPanel; targetUrl = "sozlamalar.html"; }
+  else if(tab === "blacklist"){ targetPanel = blacklistPanel; targetUrl = "bloklanganlar.html"; }
 
   if(!targetPanel && targetUrl){
     var currentPage = location.pathname.split("/").pop() || "index.html";
@@ -886,6 +1029,7 @@ function showMenuTab(tab){
   var tabTrashBtn = document.getElementById("tabTrashBtn");
   var tabStatsBtn = document.getElementById("tabStatsBtn");
   var tabSettingsBtn = document.getElementById("tabSettingsBtn");
+  var tabBlacklistBtn = document.getElementById("tabBlacklistBtn");
 
   var cameraPanel = document.getElementById("cameraPanel");
   var historyPanel = document.getElementById("historyPanel");
@@ -893,6 +1037,7 @@ function showMenuTab(tab){
   var trashPanel = document.getElementById("trashPanel");
   var statsPanel = document.getElementById("statsPanel");
   var settingsPanel = document.getElementById("settingsPanel");
+  var blacklistPanel = document.getElementById("blacklistPanel");
 
   if(tabCameraBtn) tabCameraBtn.classList.remove("active");
   if(tabHistoryBtn) tabHistoryBtn.classList.remove("active");
@@ -900,8 +1045,9 @@ function showMenuTab(tab){
   if(tabTrashBtn) tabTrashBtn.classList.remove("active");
   if(tabStatsBtn) tabStatsBtn.classList.remove("active");
   if(tabSettingsBtn) tabSettingsBtn.classList.remove("active");
+  if(tabBlacklistBtn) tabBlacklistBtn.classList.remove("active");
 
-  var panels = [cameraPanel, historyPanel, pendingPanel, trashPanel, statsPanel, settingsPanel];
+  var panels = [cameraPanel, historyPanel, pendingPanel, trashPanel, statsPanel, settingsPanel, blacklistPanel];
   for(var i=0; i<panels.length; i++){
     if(panels[i]){
       panels[i].style.setProperty("display", "none", "important");
@@ -950,6 +1096,13 @@ function showMenuTab(tab){
       settingsPanel.classList.remove("tabHidden");
     }
     loadSettingsIntoForm();
+  } else if(tab === "blacklist"){
+    if(tabBlacklistBtn) tabBlacklistBtn.classList.add("active");
+    if(blacklistPanel){
+      blacklistPanel.style.setProperty("display", "flex", "important");
+      blacklistPanel.classList.remove("tabHidden");
+    }
+    renderBlacklistList();
   }
 
   closeMenuFn();
@@ -1522,6 +1675,7 @@ function exportBackup(){
       history: loadHistory(),
       trash: loadTrash(),
       pending: loadPending(),
+      blacklist: loadBlacklist(),
       operatorName: operatorName,
       botToken: BOT_TOKEN,
       chatId: CHAT_ID,
@@ -1572,6 +1726,7 @@ if (importBackupFile) importBackupFile.addEventListener("change", function(){
       if(Array.isArray(data.history)){ saveHistory(data.history); }
       if(Array.isArray(data.trash)){ saveTrash(data.trash); }
       if(Array.isArray(data.pending)){ savePending(data.pending); }
+      if(Array.isArray(data.blacklist)){ saveBlacklist(data.blacklist); }
       if(typeof data.operatorName === "string" && data.operatorName.trim() !== ""){
         localStorage.setItem(NAME_KEY, data.operatorName.trim());
       }
@@ -1620,6 +1775,11 @@ function showToast(text, isError){
 }
 
 function stampImage(ctx, w, h, plate, note, time, date, operator, paymentStatus){
+  var isBanned = isBlacklisted(plate);
+  var borderThickness = Math.max(8, Math.round(w * 0.012));
+  var innerLineThickness = Math.max(2, Math.round(w * 0.003));
+  var statusColor = (isBanned || paymentStatus === "Pul olmadi") ? "#FF3333" : "#00FF66";
+
   var plateFontSize = Math.round(w * 0.075);
   if(plateFontSize < 34){ plateFontSize = 34; }
 
@@ -1643,44 +1803,89 @@ function stampImage(ctx, w, h, plate, note, time, date, operator, paymentStatus)
   if(extraLines > 0){
     barH = barH + extraLines * (lineGap + noteFontSize) + pad * 0.4;
   }
-  barH = Math.round(barH);
+  barH = Math.round(barH) + borderThickness;
 
-  ctx.fillStyle = "rgba(8,18,30,0.78)";
-  ctx.fillRect(0, h - barH, w, barH);
+  // Draw semi-transparent dark text bar
+  ctx.fillStyle = "rgba(8,18,30,0.80)";
+  ctx.fillRect(borderThickness, h - barH, w - 2 * borderThickness, barH - borderThickness);
 
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
 
+  var textX = Math.round(w * 0.035) + borderThickness;
   var cursorY = h - barH + pad + plateFontSize;
 
   ctx.font = "800 " + plateFontSize + "px 'JetBrains Mono', 'Courier New', monospace";
   ctx.fillStyle = "#ffffff";
-  ctx.fillText(plate, w * 0.035, cursorY);
+  ctx.fillText(plate, textX, cursorY);
 
   cursorY = cursorY + lineGap + subFontSize;
   ctx.font = "700 " + subFontSize + "px 'JetBrains Mono', 'Courier New', monospace";
   ctx.fillStyle = "#ffd54a";
-  ctx.fillText(time + "   " + date, w * 0.035, cursorY);
+  ctx.fillText(time + "   " + date, textX, cursorY);
 
   if(paymentStatus){
     cursorY = cursorY + lineGap + noteFontSize;
     ctx.font = "800 " + noteFontSize + "px 'Manrope', Arial, sans-serif";
-    ctx.fillStyle = (paymentStatus === "Pul olmadi") ? "#FF3333" : "#00FF66";
-    ctx.fillText("To'lov: " + paymentStatus, w * 0.035, cursorY);
+    ctx.fillStyle = statusColor;
+    ctx.fillText("To'lov: " + paymentStatus, textX, cursorY);
   }
 
   if(note){
     cursorY = cursorY + lineGap + noteFontSize;
     ctx.font = "600 " + noteFontSize + "px 'Manrope', Arial, sans-serif";
     ctx.fillStyle = "#e7f0fa";
-    ctx.fillText("Izoh: " + note, w * 0.035, cursorY);
+    ctx.fillText("Izoh: " + note, textX, cursorY);
   }
 
   if(operator){
     cursorY = cursorY + lineGap + noteFontSize;
     ctx.font = "600 " + noteFontSize + "px 'Manrope', Arial, sans-serif";
     ctx.fillStyle = "#a9d6ff";
-    ctx.fillText("Oldi: " + operator, w * 0.035, cursorY);
+    ctx.fillText("Oldi: " + operator, textX, cursorY);
+  }
+
+  // Draw solid dark outer border around entire canvas
+  ctx.lineWidth = borderThickness;
+  ctx.strokeStyle = "#08121e";
+  ctx.strokeRect(borderThickness / 2, borderThickness / 2, w - borderThickness, h - borderThickness);
+
+  // Draw neon accent line parallel to the border (Green / Red)
+  var innerOffset = borderThickness;
+  ctx.lineWidth = innerLineThickness;
+  ctx.strokeStyle = statusColor;
+  ctx.strokeRect(
+    innerOffset + innerLineThickness / 2,
+    innerOffset + innerLineThickness / 2,
+    w - 2 * innerOffset - innerLineThickness,
+    h - 2 * innerOffset - innerLineThickness
+  );
+
+  // Draw top border/accent line on the text bar
+  var lineY = h - barH;
+  ctx.lineWidth = Math.max(3, Math.round(w * 0.004));
+  ctx.strokeStyle = statusColor;
+  ctx.beginPath();
+  ctx.moveTo(borderThickness, lineY);
+  ctx.lineTo(w - borderThickness, lineY);
+  ctx.stroke();
+
+  // Draw a prominent red header bar if the vehicle is blacklisted
+  if(isBanned){
+    var headerH = Math.round(h * 0.08);
+    if(headerH < 35){ headerH = 35; }
+    ctx.fillStyle = "rgba(220, 38, 38, 0.92)";
+    ctx.fillRect(borderThickness, borderThickness, w - 2 * borderThickness, headerH);
+    
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.font = "800 " + Math.round(w * 0.038) + "px 'Manrope', Arial, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("⚠️ ZAPRET / TAQIQLANGAN MASHINA", w / 2, borderThickness + headerH / 2);
+    
+    // Restore text baselines
+    ctx.textBaseline = "alphabetic";
+    ctx.textAlign = "left";
   }
 }
 
@@ -1721,19 +1926,31 @@ function formatPlateForDisplay(plate){
 function buildOcrCanvasFromSource(sourceEl, w, h){
   if(!w || !h){ return null; }
 
+  // Crop the middle 75% width and 45% height where the license plate is framed
+  var cropW = Math.round(w * 0.75);
+  var cropH = Math.round(h * 0.45);
+  var cropX = Math.round((w - cropW) / 2);
+  var cropY = Math.round((h - cropH) / 2);
+
   var oc = document.createElement("canvas");
-  var scale = 2;
-  oc.width = w * scale;
-  oc.height = h * scale;
+  var scale = 2; // Upscale for better OCR text edges
+  oc.width = cropW * scale;
+  oc.height = cropH * scale;
+
   var octx = oc.getContext("2d");
-  octx.drawImage(sourceEl, 0, 0, oc.width, oc.height);
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = "high";
+
+  // Draw ONLY the cropped middle portion
+  octx.drawImage(sourceEl, cropX, cropY, cropW, cropH, 0, 0, oc.width, oc.height);
 
   var imgData = octx.getImageData(0, 0, oc.width, oc.height);
   var d = imgData.data;
   var i;
   for(i = 0; i < d.length; i += 4){
     var gray = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-    gray = (gray - 128) * 1.5 + 128;
+    // Boost contrast
+    gray = (gray - 128) * 2.0 + 128;
     if(gray < 0){ gray = 0; }
     if(gray > 255){ gray = 255; }
     d[i] = gray; d[i + 1] = gray; d[i + 2] = gray;
@@ -1782,6 +1999,7 @@ function runGalleryOcr(img){
   autoReadBtn.disabled = true;
 
   Tesseract.recognize(ocrCanvas, "eng", {
+    langPath: "https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0",
     tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   }).then(function(result){
     var rawText = (result && result.data && result.data.text) ? result.data.text : "";
@@ -1795,6 +2013,7 @@ function runGalleryOcr(img){
       var candidate = extractPlateFromText(cleaned);
       var displayValue = formatPlateForDisplay(candidate);
       plateInput.value = displayValue;
+      checkPlateBlacklist();
       if(isPlateLikelyValid(displayValue)){
         setStatus("Raqam aniqlandi: " + displayValue + ". Tekshirib, yuboring.", "ok");
         showToast("Aniqlandi: " + displayValue, false);
@@ -1874,6 +2093,7 @@ if (autoReadBtn) autoReadBtn.addEventListener("click", function(){
   setStatus("Raqam aniqlanmoqda, biroz kuting...", "sending");
 
   Tesseract.recognize(ocrCanvas, "eng", {
+    langPath: "https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0",
     tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   }).then(function(result){
     var rawText = (result && result.data && result.data.text) ? result.data.text : "";
@@ -1886,6 +2106,7 @@ if (autoReadBtn) autoReadBtn.addEventListener("click", function(){
       var candidate = extractPlateFromText(cleaned);
       var displayValue = formatPlateForDisplay(candidate);
       plateInput.value = displayValue;
+      checkPlateBlacklist();
       if(isPlateLikelyValid(displayValue)){
         setStatus("Raqam aniqlandi: " + displayValue + ". Tekshirib, keyin rasmga oling.", "ok");
         showToast("Aniqlandi: " + displayValue, false);
@@ -1950,7 +2171,15 @@ if (captureBtn) captureBtn.addEventListener("click", function(){
   var now = getNowStrings();
   stampImage(ctx, w, h, plateValue, noteValue, now.time, now.date, operatorName, currentPaymentStatus);
 
-  var caption = "Mashina raqami: " + plateValue;
+  var isBanned = isBlacklisted(plateValue);
+  var caption = "";
+  if(isBanned){
+    caption = "⚠️ ZAPRET / TAQIQLANGAN MASHINA! ⚠️\n";
+  }
+  caption = caption + "Mashina raqami: " + plateValue;
+  if(isBanned){
+    caption = caption + "\nSabab: " + isBanned.reason;
+  }
   caption = caption + "\nTo'lov: " + currentPaymentStatus;
   if(noteValue !== ""){
     caption = caption + "\nIzoh: " + noteValue;
@@ -2057,6 +2286,7 @@ function initAppAfterUnlock(){
   var trashPanel = document.getElementById("trashPanel");
   var statsPanel = document.getElementById("statsPanel");
   var settingsPanel = document.getElementById("settingsPanel");
+  var blacklistPanel = document.getElementById("blacklistPanel");
 
   if(cameraPanel){
     showMenuTab("camera");
@@ -2072,6 +2302,8 @@ function initAppAfterUnlock(){
     showMenuTab("stats");
   } else if(settingsPanel){
     showMenuTab("settings");
+  } else if(blacklistPanel){
+    showMenuTab("blacklist");
   }
   
   retryPendingQueue();
@@ -2135,31 +2367,36 @@ initDb(function() {
           }
         }
         
-        // Logo caching across pages
-        var logoEl = document.getElementById("logo");
-        if (logoEl) {
-          var logoSrc = logoEl.getAttribute("src");
-          if (logoSrc && logoSrc.length > 100) {
-            localStorage.setItem("katlavanLogoBase64", logoSrc);
-          } else {
-            var storedLogo = localStorage.getItem("katlavanLogoBase64");
-            if (storedLogo) {
-              logoEl.src = storedLogo;
+        dbGet("blacklist", function(blist) {
+          g_blacklist = blist || [];
+          
+          // Logo caching across pages
+          var logoEl = document.getElementById("logo");
+          if (logoEl) {
+            var logoSrc = logoEl.getAttribute("src");
+            if (logoSrc && logoSrc.length > 100) {
+              localStorage.setItem("katlavanLogoBase64", logoSrc);
+            } else {
+              var storedLogo = localStorage.getItem("katlavanLogoBase64");
+              if (storedLogo) {
+                logoEl.src = storedLogo;
+              }
             }
           }
-        }
 
-        // Render UI panels
-        renderHistory();
-        renderTrash();
-        updatePendingBar();
-        
-        // Unlock check
-        if (checkUnlocked()) {
-          proceedAfterUnlock();
-        } else {
-          pinInput.focus();
-        }
+          // Render UI panels
+          renderHistory();
+          renderTrash();
+          renderBlacklistList();
+          updatePendingBar();
+          
+          // Unlock check
+          if (checkUnlocked()) {
+            proceedAfterUnlock();
+          } else {
+            pinInput.focus();
+          }
+        });
       });
     });
   });
